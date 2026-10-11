@@ -230,7 +230,7 @@
     <!-- Photo Input -->
     <div class="upload-group">
       <label>1. Passport Size Photo:</label>
-      <div class="file-hint">Standard 3.5 x 4.5 cm proportion (Auto-compressed &le; 35 KB)</div>
+      <div class="file-hint">Original aspect preserved (Auto-compressed &le; 35 KB)</div>
       <input type="file" id="photoInput" accept="image/*" onchange="handleImageSelection(event, 'photo')">
       <div id="photoBox" class="preview-box">
         <img id="photoPreview">
@@ -331,24 +331,20 @@
     return Math.round((str.length * 3 / 4) / 1024);
   }
 
-  // Smart draw: aspect-fill to avoid stretching while centering head/face
-  function drawAspectFill(ctx, img, targetX, targetY, targetW, targetH) {
-    var scale = Math.max(targetW / img.width, targetH / img.height);
-    var renderW = img.width * scale;
-    var renderH = img.height * scale;
-    var renderX = targetX + (targetW - renderW) / 2;
-    var renderY = targetY + (targetH - renderH) / 2;
-    ctx.drawImage(img, renderX, renderY, renderW, renderH);
-  }
+  // Pure proportional scale without cropping or stretching
+  function compressProportional(img, maxDim, quality) {
+    var canvas = document.createElement("canvas");
+    var scale = Math.min(maxDim / Math.max(img.width, img.height), 1);
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
 
-  // Smart draw: aspect-fit inside bounding box (for signatures)
-  function drawAspectFit(ctx, img, targetX, targetY, targetW, targetH) {
-    var scale = Math.min(targetW / img.width, targetH / img.height);
-    var renderW = img.width * scale;
-    var renderH = img.height * scale;
-    var renderX = targetX + (targetW - renderW) / 2;
-    var renderY = targetY + (targetH - renderH) / 2;
-    ctx.drawImage(img, renderX, renderY, renderW, renderH);
+    var ctx = canvas.getContext("2d");
+    // Solid white backing handles transparent PNG cleanly
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    return canvas.toDataURL("image/jpeg", quality);
   }
 
   function handleImageSelection(event, type) {
@@ -359,46 +355,26 @@
     reader.onload = function(e) {
       var img = new Image();
       img.onload = function() {
-        var canvas = document.createElement("canvas");
-        var ctx = canvas.getContext("2d");
-
         if (type === "photo") {
-          // Standard passport proportion: 300 x 385 px (~3.5 x 4.5 cm)
-          canvas.width = 300;
-          canvas.height = 385;
-
-          // Pure white background
-          ctx.fillStyle = "#FFFFFF";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          drawAspectFill(ctx, img, 0, 0, canvas.width, canvas.height);
-
-          compressedPhotoBase64 = canvas.toDataURL("image/jpeg", 0.74);
           photoRawImg = img;
+          // Keeps 100% of original photo ratio; scales down to stay under 35 KB
+          compressedPhotoBase64 = compressProportional(img, 500, 0.74);
 
           document.getElementById("photoPreview").src = compressedPhotoBase64;
           document.getElementById("photoSizeTag").innerText = "Photo Ready • ~" + getKbSize(compressedPhotoBase64) + " KB";
           document.getElementById("photoBox").style.display = "block";
 
         } else {
-          // Standard signature strip: 300 x 100 px
-          canvas.width = 300;
-          canvas.height = 100;
-
-          // White background prevents transparent PNG black boxes
-          ctx.fillStyle = "#FFFFFF";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          drawAspectFit(ctx, img, 10, 10, canvas.width - 20, canvas.height - 20);
-
-          compressedSignBase64 = canvas.toDataURL("image/jpeg", 0.70);
           signRawImg = img;
+          // Keeps 100% of original signature ratio; scales down to stay under 15 KB
+          compressedSignBase64 = compressProportional(img, 450, 0.70);
 
           document.getElementById("signPreview").src = compressedSignBase64;
           document.getElementById("signSizeTag").innerText = "Signature Ready • ~" + getKbSize(compressedSignBase64) + " KB";
           document.getElementById("signBox").style.display = "block";
         }
 
+        // Build passport card only when both files are selected
         if (photoRawImg && signRawImg) {
           generateCombinedPassportCard();
         }
@@ -408,26 +384,35 @@
     reader.readAsDataURL(file);
   }
 
-  // Generates complete Combined Card locked at standard 350 x 450 px
+  // Merged Card: strictly 350 x 450 px passport frame with photo on top and signature below
   function generateCombinedPassportCard() {
     var totalW = 350;
     var totalH = 450;
-    var photoH = 350; // Top ~78%
-    var signH = 100;  // Bottom ~22%
+    var photoH = 355; // Upper ~79%
+    var signH = 95;   // Lower ~21%
 
     var canvas = document.createElement("canvas");
     canvas.width = totalW;
     canvas.height = totalH;
     var ctx = canvas.getContext("2d");
 
-    // Pure white canvas background
+    // Pure white card background
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, totalW, totalH);
 
-    // 1. Draw photo in top 350 x 350 area
-    drawAspectFill(ctx, photoRawImg, 0, 0, totalW, photoH);
+    // 1. Draw raw photo anchored directly from top to avoid white bars above hair
+    var pScale = totalW / photoRawImg.width;
+    var drawW = totalW;
+    var drawH = photoRawImg.height * pScale;
 
-    // 2. Crisp divider line
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, totalW, photoH);
+    ctx.clip(); // Keeps clean cut inside the top 355 px compartment
+    ctx.drawImage(photoRawImg, 0, 0, drawW, drawH);
+    ctx.restore();
+
+    // 2. Crisp boundary divider line
     ctx.strokeStyle = "#CBD5E1";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -435,10 +420,18 @@
     ctx.lineTo(totalW, photoH);
     ctx.stroke();
 
-    // 3. Draw signature in bottom 350 x 100 area
-    drawAspectFit(ctx, signRawImg, 15, photoH + 8, totalW - 30, signH - 16);
+    // 3. Draw Signature centered in bottom strip with safe margins
+    var maxSignW = totalW - 30;
+    var maxSignH = signH - 16;
+    var sScale = Math.min(maxSignW / signRawImg.width, maxSignH / signRawImg.height);
+    var sW = signRawImg.width * sScale;
+    var sH = signRawImg.height * sScale;
+    var sX = (totalW - sW) / 2;
+    var sY = photoH + (signH - sH) / 2;
 
-    // Export pure JPG strictly under 35 KB
+    ctx.drawImage(signRawImg, sX, sY, sW, sH);
+
+    // Export pure JPG under 35 KB
     combinedBase64 = canvas.toDataURL("image/jpeg", 0.74);
 
     document.getElementById("combinedPreview").src = combinedBase64;
