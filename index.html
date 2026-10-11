@@ -169,7 +169,7 @@
       margin: 10px auto 0 auto;
       max-width: 180px;
       border-radius: 4px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     }
     .status {
       text-align: center;
@@ -250,8 +250,8 @@
 
     <!-- Merged Card Live Preview -->
     <div id="combinedBox" class="combined-card-box">
-      <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Passport Size Card (350 &times; 450 px)</span>
-      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Photo with integrated signature (30–35 KB)</div>
+      <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Passport Size Card (3.5 &times; 4.5 cm Ratio)</span>
+      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Enclosed outer border with integrated signature (30–35 KB)</div>
       <img id="combinedPreview">
       <div id="combinedSizeTag" class="file-size-tag"></div>
     </div>
@@ -330,7 +330,7 @@
     return Math.round((str.length * 3 / 4) / 1024);
   }
 
-  // Pure proportional scale without cropping or stretching
+  // Pure proportional scale without cropping or stretching for standalone files
   function compressProportional(img, maxDim, quality) {
     var canvas = document.createElement("canvas");
     var scale = Math.min(maxDim / Math.max(img.width, img.height), 1);
@@ -338,7 +338,6 @@
     canvas.height = Math.round(img.height * scale);
 
     var ctx = canvas.getContext("2d");
-    // Solid white backing handles transparent PNG cleanly
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -356,7 +355,7 @@
       img.onload = function() {
         if (type === "photo") {
           photoRawImg = img;
-          // Keeps 100% of original photo ratio; scales down to stay under 35 KB
+          // Standalone photo stays uncropped, compressed strictly <= 35 KB
           compressedPhotoBase64 = compressProportional(img, 500, 0.74);
 
           document.getElementById("photoPreview").src = compressedPhotoBase64;
@@ -365,7 +364,7 @@
 
         } else {
           signRawImg = img;
-          // Keeps 100% of original signature ratio; scales down to stay under 15 KB
+          // Standalone signature stays uncropped, compressed strictly <= 15 KB
           compressedSignBase64 = compressProportional(img, 450, 0.70);
 
           document.getElementById("signPreview").src = compressedSignBase64;
@@ -373,7 +372,7 @@
           document.getElementById("signBox").style.display = "block";
         }
 
-        // Build passport card only when both files are selected
+        // Generate combined card when both images are loaded
         if (photoRawImg && signRawImg) {
           generateCombinedPassportCard();
         }
@@ -383,23 +382,24 @@
     reader.readAsDataURL(file);
   }
 
-  // Merged Card: strictly 350 x 450 px with bold visible border & size between 30 KB - 35 KB
+  // Merged Card: High-Definition Passport Proportions with border (Strictly 30 KB - 35 KB)
   function generateCombinedPassportCard() {
-    var totalW = 350;
-    var totalH = 450;
-    var photoH = 355; // Upper photo area (~79%)
-    var signH = 95;   // Lower signature area (~21%)
+    // 700 x 900 px maintains the standard 3.5 x 4.5 cm passport ratio (300 DPI clarity)
+    var totalW = 700;
+    var totalH = 900;
+    var photoH = 710; // Upper photo compartment (~79%)
+    var signH = 190;  // Lower signature compartment (~21%)
 
     var canvas = document.createElement("canvas");
     canvas.width = totalW;
     canvas.height = totalH;
     var ctx = canvas.getContext("2d");
 
-    // 1. Pure white card background
+    // 1. Pure white background
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, totalW, totalH);
 
-    // 2. Draw raw photo filling compartment cleanly without blank gaps or stretching
+    // 2. Draw raw photo filling compartment cleanly without gaps or distortion
     var pScale = Math.max(totalW / photoRawImg.width, photoH / photoRawImg.height);
     var drawW = photoRawImg.width * pScale;
     var drawH = photoRawImg.height * pScale;
@@ -408,21 +408,21 @@
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, totalW, photoH);
-    ctx.clip(); // Keeps clean cut inside the top 355 px compartment
+    ctx.clip();
     ctx.drawImage(photoRawImg, drawX, 0, drawW, drawH);
     ctx.restore();
 
     // 3. Clear horizontal divider line between photo and signature
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(0, photoH);
     ctx.lineTo(totalW, photoH);
     ctx.stroke();
 
     // 4. Draw Signature centered in bottom strip with safe margins
-    var maxSignW = totalW - 30;
-    var maxSignH = signH - 16;
+    var maxSignW = totalW - 60;
+    var maxSignH = signH - 30;
     var sScale = Math.min(maxSignW / signRawImg.width, maxSignH / signRawImg.height);
     var sW = signRawImg.width * sScale;
     var sH = signRawImg.height * sScale;
@@ -433,22 +433,30 @@
 
     // 5. Solid outer border drawn on top of all layers
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(2, 2, totalW - 4, totalH - 4);
 
-    // 6. Adaptive compression loop to keep file strictly between 30 KB and 35 KB
-    var quality = 0.94;
+    // 6. Adaptive compression loop to target strictly between 30 KB and 35 KB
+    var quality = 0.82;
     combinedBase64 = canvas.toDataURL("image/jpeg", quality);
     var currentKb = getKbSize(combinedBase64);
 
-    while (currentKb > 35 && quality > 0.80) {
+    // Increase quality if under 30 KB
+    while (currentKb < 30 && quality < 0.96) {
+      quality += 0.02;
+      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
+      currentKb = getKbSize(combinedBase64);
+    }
+
+    // Step down gently if over 35 KB
+    while (currentKb > 35 && quality > 0.60) {
       quality -= 0.02;
       combinedBase64 = canvas.toDataURL("image/jpeg", quality);
       currentKb = getKbSize(combinedBase64);
     }
 
     document.getElementById("combinedPreview").src = combinedBase64;
-    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + currentKb + " KB (Target: 30-35 KB)";
+    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + currentKb + " KB (Target: 30–35 KB)";
     document.getElementById("combinedBox").style.display = "block";
   }
 
