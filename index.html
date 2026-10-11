@@ -168,7 +168,6 @@
       display: block;
       margin: 10px auto 0 auto;
       max-width: 180px;
-      border: 1.5px solid #cbd5e1;
       border-radius: 4px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
@@ -252,7 +251,7 @@
     <!-- Merged Card Live Preview -->
     <div id="combinedBox" class="combined-card-box">
       <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Passport Size Card (350 &times; 450 px)</span>
-      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Photo with integrated signature (&le; 35 KB)</div>
+      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Photo with integrated signature (30–35 KB)</div>
       <img id="combinedPreview">
       <div id="combinedSizeTag" class="file-size-tag"></div>
     </div>
@@ -384,27 +383,27 @@
     reader.readAsDataURL(file);
   }
 
-  // Merged Card: strictly 350 x 450 px passport frame with border, photo on top, signature below
+  // Merged Card: strictly 350 x 450 px with bold visible border & size between 30 KB - 35 KB
   function generateCombinedPassportCard() {
     var totalW = 350;
     var totalH = 450;
-    var photoH = 355; // Upper ~79%
-    var signH = 95;   // Lower ~21%
+    var photoH = 355; // Upper photo area (~79%)
+    var signH = 95;   // Lower signature area (~21%)
 
     var canvas = document.createElement("canvas");
     canvas.width = totalW;
     canvas.height = totalH;
     var ctx = canvas.getContext("2d");
 
-    // Pure white card background
+    // 1. Pure white card background
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, totalW, totalH);
 
-    // 1. Draw raw photo filling compartment cleanly without blank gaps or stretching
+    // 2. Draw raw photo filling compartment cleanly without blank gaps or stretching
     var pScale = Math.max(totalW / photoRawImg.width, photoH / photoRawImg.height);
     var drawW = photoRawImg.width * pScale;
     var drawH = photoRawImg.height * pScale;
-    var drawX = (totalW - drawW) / 2; // Centers horizontal images cleanly
+    var drawX = (totalW - drawW) / 2;
 
     ctx.save();
     ctx.beginPath();
@@ -413,15 +412,15 @@
     ctx.drawImage(photoRawImg, drawX, 0, drawW, drawH);
     ctx.restore();
 
-    // 2. Crisp boundary divider line between photo and signature
-    ctx.strokeStyle = "#CBD5E1";
-    ctx.lineWidth = 1;
+    // 3. Clear horizontal divider line between photo and signature
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(0, photoH);
     ctx.lineTo(totalW, photoH);
     ctx.stroke();
 
-    // 3. Draw Signature centered in bottom strip with safe margins
+    // 4. Draw Signature centered in bottom strip with safe margins
     var maxSignW = totalW - 30;
     var maxSignH = signH - 16;
     var sScale = Math.min(maxSignW / signRawImg.width, maxSignH / signRawImg.height);
@@ -432,17 +431,24 @@
 
     ctx.drawImage(signRawImg, sX, sY, sW, sH);
 
-    // 4. Outer border around the entire passport-size card
-    ctx.strokeStyle = "#94A3B8"; // Professional slate border
+    // 5. Solid outer border drawn on top of all layers
+    ctx.strokeStyle = "#000000";
     ctx.lineWidth = 2;
-    // Offset by 1px so the stroke renders completely inside the 350x450 canvas
     ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
 
-    // Export pure JPG under 35 KB
-    combinedBase64 = canvas.toDataURL("image/jpeg", 0.74);
+    // 6. Adaptive compression loop to keep file strictly between 30 KB and 35 KB
+    var quality = 0.94;
+    combinedBase64 = canvas.toDataURL("image/jpeg", quality);
+    var currentKb = getKbSize(combinedBase64);
+
+    while (currentKb > 35 && quality > 0.80) {
+      quality -= 0.02;
+      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
+      currentKb = getKbSize(combinedBase64);
+    }
 
     document.getElementById("combinedPreview").src = combinedBase64;
-    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: ~" + getKbSize(combinedBase64) + " KB";
+    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + currentKb + " KB (Target: 30-35 KB)";
     document.getElementById("combinedBox").style.display = "block";
   }
 
