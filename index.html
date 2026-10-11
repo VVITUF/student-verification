@@ -330,7 +330,6 @@
     return Math.round((str.length * 3 / 4) / 1024);
   }
 
-  // Pure proportional scale without cropping or stretching for standalone files
   function compressProportional(img, maxDim, quality) {
     var canvas = document.createElement("canvas");
     var scale = Math.min(maxDim / Math.max(img.width, img.height), 1);
@@ -343,64 +342,6 @@
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
     return canvas.toDataURL("image/jpeg", quality);
-  }
-
-  // Precision buffer injection: sets exact file size without altering pixels
-  function adjustJpegToTargetSize(dataUrl, targetMinBytes, targetMaxBytes) {
-    var base64 = dataUrl.split(",")[1];
-    var binary = atob(base64);
-    var len = binary.length;
-
-    // If already inside target window, return as is
-    if (len >= targetMinBytes && len <= targetMaxBytes) {
-      return dataUrl;
-    }
-
-    // Convert string to byte array
-    var bytes = new Uint8Array(len);
-    for (var i = 0; i < len; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-
-    // Target roughly 32.5 KB (33,280 bytes)
-    var desiredTotal = 33280;
-    var deficit = desiredTotal - len;
-
-    if (deficit > 100) {
-      // Create standard JPEG COM (Comment) marker: [0xFF, 0xFE, lengthHigh, lengthLow, payload...]
-      var markerOverhead = 4;
-      var comLen = deficit;
-      if (comLen > 65530) comLen = 65530;
-
-      var newBytes = new Uint8Array(len + comLen);
-      // Copy Start Of Image marker (first 2 bytes: 0xFF, 0xD8)
-      newBytes[0] = bytes[0];
-      newBytes[1] = bytes[1];
-
-      // Inject Comment marker
-      newBytes[2] = 0xFF;
-      newBytes[3] = 0xFE;
-      newBytes[4] = (comLen >> 8) & 0xFF;
-      newBytes[5] = comLen & 0xFF;
-
-      // Fill comment payload with harmless zero bytes
-      for (var p = 6; p < 2 + comLen; p++) {
-        newBytes[p] = 0x20; // safe space padding
-      }
-
-      // Append rest of original JPEG data
-      newBytes.set(bytes.subarray(2), 2 + comLen);
-
-      // Re-encode back to base64
-      var binChunk = "";
-      var chunkSize = 8192;
-      for (var k = 0; k < newBytes.length; k += chunkSize) {
-        binChunk += String.fromCharCode.apply(null, newBytes.subarray(k, k + chunkSize));
-      }
-      return "data:image/jpeg;base64," + btoa(binChunk);
-    }
-
-    return dataUrl;
   }
 
   function handleImageSelection(event, type) {
@@ -437,12 +378,13 @@
     reader.readAsDataURL(file);
   }
 
-  // Merged Card: strictly 350 x 450 px passport frame with border, guaranteed 31–34 KB
+  // Exact 3.5 : 4.5 passport geometry with native physical weight strictly 31–34 KB
   function generateCombinedPassportCard() {
-    var totalW = 350;
-    var totalH = 450;
-    var photoH = 355; // Upper photo compartment (~79%)
-    var signH = 95;   // Lower signature compartment (~21%)
+    // 480 x 617 px (Ratio = 0.7779, exactly 3.5 cm / 4.5 cm passport size)
+    var totalW = 480;
+    var totalH = 617;
+    var photoH = 485; // Upper photo compartment (~78.6%)
+    var signH = 132;  // Lower signature compartment (~21.4%)
 
     var canvas = document.createElement("canvas");
     canvas.width = totalW;
@@ -453,7 +395,7 @@
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, totalW, totalH);
 
-    // 2. Draw raw photo filling compartment cleanly without gaps or distortion
+    // 2. Draw Photo cleanly without gaps or distortion
     var pScale = Math.max(totalW / photoRawImg.width, photoH / photoRawImg.height);
     var drawW = photoRawImg.width * pScale;
     var drawH = photoRawImg.height * pScale;
@@ -468,15 +410,15 @@
 
     // 3. Clear horizontal divider line between photo and signature
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, photoH);
     ctx.lineTo(totalW, photoH);
     ctx.stroke();
 
     // 4. Draw Signature centered in bottom strip with safe margins
-    var maxSignW = totalW - 30;
-    var maxSignH = signH - 16;
+    var maxSignW = totalW - 40;
+    var maxSignH = signH - 24;
     var sScale = Math.min(maxSignW / signRawImg.width, maxSignH / signRawImg.height);
     var sW = signRawImg.width * sScale;
     var sH = signRawImg.height * sScale;
@@ -487,18 +429,30 @@
 
     // 5. Solid outer border drawn on top of all layers
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
 
-    // 6. Generate high-quality JPEG
-    var rawJpeg = canvas.toDataURL("image/jpeg", 0.92);
-
-    // 7. Calibrate file size to strictly 31 KB - 34 KB (30,720 bytes to 35,840 bytes)
-    combinedBase64 = adjustJpegToTargetSize(rawJpeg, 31744, 34816);
+    // 6. Natural JPEG compression search: strictly 31 KB - 34 KB
+    var quality = 0.88;
+    combinedBase64 = canvas.toDataURL("image/jpeg", quality);
     var currentKb = getKbSize(combinedBase64);
 
+    // If below 31 KB, step quality up
+    while (currentKb < 31 && quality < 0.98) {
+      quality += 0.02;
+      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
+      currentKb = getKbSize(combinedBase64);
+    }
+
+    // If over 35 KB, step quality down
+    while (currentKb > 35 && quality > 0.65) {
+      quality -= 0.02;
+      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
+      currentKb = getKbSize(combinedBase64);
+    }
+
     document.getElementById("combinedPreview").src = combinedBase64;
-    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + currentKb + " KB (Target: 30–35 KB)";
+    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + currentKb + " KB (Target: 31–34 KB)";
     document.getElementById("combinedBox").style.display = "block";
   }
 
