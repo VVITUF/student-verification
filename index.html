@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Verification & Upload</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f1f5f9;
+      color: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 6px;
+      font-size: 1.25rem;
+      color: #0f172a;
+    }
+    p {
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-top: 0;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+    .step {
+      display: none;
+    }
+    .step.active {
+      display: block;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 1rem;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: #2563eb;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffffff;
+      background: #2563eb;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .danger {
+      background: #dc2626;
+    }
+    .success {
+      background: #16a34a;
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn-row button {
+      margin-top: 0;
+    }
+    .details-box {
+      display: none;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+    .details-box table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+    }
+    .details-box td {
+      padding: 6px 0;
+      font-size: 0.92rem;
+      vertical-align: top;
+    }
+    .details-box td:first-child {
+      font-weight: 600;
+      width: 35%;
+      color: #475569;
+    }
+    .error-box {
+      display: none;
+      color: #dc2626;
+      background: #fee2e2;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .upload-group {
+      margin-top: 16px;
+    }
+    .upload-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+    input[type="file"] {
+      width: 100%;
+      font-size: 0.9rem;
+    }
+    .preview-img {
+      width: 100%;
+      max-height: 180px;
+      object-fit: contain;
+      border-radius: 6px;
+      margin-top: 8px;
+      display: none;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .status {
+      text-align: center;
+      font-weight: 600;
+      margin-top: 14px;
+      font-size: 0.95rem;
+    }
+    .file-btn {
+      display: block;
+      text-align: center;
+      background: #0f766e;
+      color: #ffffff;
+      padding: 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <!-- Step 1: Verification -->
+  <div id="step1" class="step active">
+    <h2>Student Verification</h2>
+    <p>Enter your Registration Number to verify details.</p>
+
+    <div id="lookupError" class="error-box">No details found. Please enter the correct Regd No.</div>
+
+    <input type="text" id="regdNoInput" placeholder="e.g. 2026DCEBT10001" autocomplete="off">
+    <button id="searchBtn" onclick="verifyRegdNo()">Verify Regd No.</button>
+
+    <div id="detailsBox" class="details-box">
+      <table>
+        <tr><td>Regd No.:</td><td id="lblRegd"></td></tr>
+        <tr><td>Name:</td><td id="lblName"></td></tr>
+        <tr><td>Section:</td><td id="lblSection"></td></tr>
+      </table>
+      <p style="font-weight: 600; color: #0f172a; margin-bottom: 6px;">Are these details correct?</p>
+      <div class="btn-row">
+        <button class="danger" onclick="exitPortal()">No (Exit)</button>
+        <button class="success" onclick="proceedToUpload()">Yes (Proceed)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Upload Files -->
+  <div id="step2" class="step">
+    <h2>Upload Files</h2>
+    <p>Upload your photo and signature. Files will be saved with your Regd No.</p>
+
+    <div class="upload-group">
+      <label>1. Passport Size Photo:</label>
+      <input type="file" id="photoInput" accept="image/*" onchange="handleFileSelect(event, 'photoPreview', 'photo')">
+      <img id="photoPreview" class="preview-img">
+    </div>
+
+    <div class="upload-group">
+      <label>2. Signature:</label>
+      <input type="file" id="signInput" accept="image/*" onchange="handleFileSelect(event, 'signPreview', 'sign')">
+      <img id="signPreview" class="preview-img">
+    </div>
+
+    <button id="uploadBtn" style="margin-top: 22px;" onclick="uploadData()">Upload to Drive</button>
+    <div id="statusMessage" class="status"></div>
+    <div id="resultLinks" style="display:none; margin-top: 14px;"></div>
+  </div>
+</div>
+
+<script>
+  // Paste your Apps Script Web App Deployment URL here
+  var SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
+
+  var currentStudent = null;
+  var photoBase64 = null;
+  var signBase64 = null;
+
+  async function verifyRegdNo() {
+    var val = document.getElementById("regdNoInput").value.trim().toUpperCase();
+    var errBox = document.getElementById("lookupError");
+    var detailsBox = document.getElementById("detailsBox");
+    var btn = document.getElementById("searchBtn");
+
+    errBox.style.display = "none";
+    detailsBox.style.display = "none";
+
+    if (!val) {
+      errBox.innerText = "Please enter your Regd No.";
+      errBox.style.display = "block";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Verifying...";
+
+    try {
+      var res = await fetch(SCRIPT_URL + "?action=lookup&regdNo=" + encodeURIComponent(val));
+      var data = await res.json();
+
+      if (data.status === "found") {
+        currentStudent = data;
+        document.getElementById("lblRegd").innerText = data.regdNo;
+        document.getElementById("lblName").innerText = data.name;
+        document.getElementById("lblSection").innerText = data.section;
+        detailsBox.style.display = "block";
+      } else {
+        errBox.innerText = "No details found. Please enter the correct Regd No.";
+        errBox.style.display = "block";
+      }
+    } catch (e) {
+      errBox.innerText = "Verification failed. Check your network connection.";
+      errBox.style.display = "block";
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "Verify Regd No.";
+    }
+  }
+
+  function exitPortal() {
+    currentStudent = null;
+    document.getElementById("detailsBox").style.display = "none";
+    document.getElementById("regdNoInput").value = "";
+    document.getElementById("lookupError").style.display = "none";
+    alert("Verification cancelled. You can enter your Regd No. again.");
+  }
+
+  function proceedToUpload() {
+    document.getElementById("step1").classList.remove("active");
+    document.getElementById("step2").classList.add("active");
+  }
+
+  function handleFileSelect(event, previewId, type) {
+    var file = event.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = document.getElementById(previewId);
+      img.src = e.target.result;
+      img.style.display = "block";
+
+      if (type === "photo") photoBase64 = e.target.result;
+      if (type === "sign") signBase64 = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function uploadData() {
+    var btn = document.getElementById("uploadBtn");
+    var status = document.getElementById("statusMessage");
+    var links = document.getElementById("resultLinks");
+
+    if (!photoBase64 || !signBase64) {
+      alert("Please select both your Photo and Signature before uploading.");
+      return;
+    }
+
+    btn.disabled = true;
+    status.style.color = "#2563eb";
+    status.innerText = "Uploading files to Google Drive...";
+
+    var payload = {
+      regdNo: currentStudent.regdNo,
+      photo: photoBase64,
+      signature: signBase64
+    };
+
+    try {
+      var res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      var data = await res.json();
+
+      if (data.status === "success") {
+        status.style.color = "#16a34a";
+        status.innerText = "Upload successful! Files saved under Regd No: " + currentStudent.regdNo;
+        btn.style.display = "none";
+
+        links.innerHTML = `
+          <a class="file-btn" href="${data.photoUrl}" target="_blank">View Uploaded Photo in Drive</a>
+          <a class="file-btn" href="${data.signUrl}" target="_blank">View Uploaded Signature in Drive</a>
+        `;
+        links.style.display = "block";
+      } else {
+        throw new Error(data.message || "Failed to upload");
+      }
+    } catch (e) {
+      status.style.color = "#dc2626";
+      status.innerText = "Upload failed. Please check connection and try again.";
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
