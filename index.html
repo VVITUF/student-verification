@@ -216,7 +216,7 @@
 </div>
 
 <script>
-  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJqlGWvRyCq31eX3EjoZCrzoOXEiQywCLwQb0fExtGiVp2R8d28FBad1Vp8HsA91H1/exec";
+  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuJGRhvR0ntrVBpBnn4RYD4GfsSuxhKwp3C3Hz0Jx0oXFVIfeCW9Mu8h0i5r2LUk8I/exec";
 
   var currentStudent = null;
   var photoBase64 = null;
@@ -313,7 +313,6 @@
     };
 
     try {
-      // Using text/plain payload and follow redirect mode prevents CORS fetch rejection on Apps Script
       var res = await fetch(SCRIPT_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
