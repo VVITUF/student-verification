@@ -74,20 +74,14 @@
       background: #94a3b8;
       cursor: not-allowed;
     }
-    .danger {
-      background: #dc2626;
-    }
-    .success {
-      background: #16a34a;
-    }
+    .danger { background: #dc2626; }
+    .success { background: #16a34a; }
     .btn-row {
       display: flex;
       gap: 10px;
       margin-top: 14px;
     }
-    .btn-row button {
-      margin-top: 0;
-    }
+    .btn-row button { margin-top: 0; }
     .details-box {
       display: none;
       background: #f8fafc;
@@ -128,22 +122,55 @@
       display: block;
       font-weight: 600;
       font-size: 0.9rem;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       color: #334155;
+    }
+    .file-hint {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-bottom: 6px;
     }
     input[type="file"] {
       width: 100%;
       font-size: 0.9rem;
     }
-    .preview-img {
-      width: 100%;
-      max-height: 180px;
-      object-fit: contain;
-      border-radius: 6px;
-      margin-top: 8px;
+    .preview-box {
       display: none;
-      border: 1px solid #e2e8f0;
+      margin-top: 8px;
+      text-align: center;
       background: #f8fafc;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    .preview-box img {
+      max-height: 140px;
+      max-width: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    .file-size-tag {
+      font-size: 0.75rem;
+      color: #16a34a;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .combined-card-box {
+      display: none;
+      margin-top: 18px;
+      padding: 14px;
+      background: #f8fafc;
+      border: 1.5px dashed #94a3b8;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .combined-card-box img {
+      display: block;
+      margin: 8px auto 0 auto;
+      max-width: 200px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
     .status {
       text-align: center;
@@ -156,12 +183,15 @@
       text-align: center;
       background: #0f766e;
       color: #ffffff;
-      padding: 12px;
+      padding: 11px;
       border-radius: 8px;
       text-decoration: none;
       font-weight: 600;
-      font-size: 0.9rem;
-      margin-top: 10px;
+      font-size: 0.88rem;
+      margin-top: 8px;
+    }
+    .file-btn.combined-btn {
+      background: #4338ca;
     }
   </style>
 </head>
@@ -195,18 +225,36 @@
   <!-- Step 2: Upload Files -->
   <div id="step2" class="step">
     <h2>Upload Files</h2>
-    <p>Upload your photo and signature. Files will be saved with your Regd No.</p>
+    <p>Upload your photo and signature. Files are automatically compressed.</p>
 
+    <!-- Photo Input -->
     <div class="upload-group">
       <label>1. Passport Size Photo:</label>
-      <input type="file" id="photoInput" accept="image/*" onchange="handleFileSelect(event, 'photoPreview', 'photo')">
-      <img id="photoPreview" class="preview-img">
+      <div class="file-hint">Auto-compressed to ~30 KB (JPG, 300x380 px)</div>
+      <input type="file" id="photoInput" accept="image/*" onchange="handleImageSelection(event, 'photo')">
+      <div id="photoBox" class="preview-box">
+        <img id="photoPreview">
+        <div id="photoSizeTag" class="file-size-tag"></div>
+      </div>
     </div>
 
+    <!-- Signature Input -->
     <div class="upload-group">
       <label>2. Signature:</label>
-      <input type="file" id="signInput" accept="image/*" onchange="handleFileSelect(event, 'signPreview', 'sign')">
-      <img id="signPreview" class="preview-img">
+      <div class="file-hint">Auto-compressed to ~12 KB (JPG, 300x100 px)</div>
+      <input type="file" id="signInput" accept="image/*" onchange="handleImageSelection(event, 'sign')">
+      <div id="signBox" class="preview-box">
+        <img id="signPreview">
+        <div id="signSizeTag" class="file-size-tag"></div>
+      </div>
+    </div>
+
+    <!-- Live Merged Card Preview -->
+    <div id="combinedBox" class="combined-card-box">
+      <span style="font-size: 0.85rem; font-weight: 700; color: #334155;">Preview: Merged Photo & Signature Card</span>
+      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">This merged file will be saved in IMAGE_AND_SIGN</div>
+      <img id="combinedPreview">
+      <div id="combinedSizeTag" class="file-size-tag"></div>
     </div>
 
     <button id="uploadBtn" style="margin-top: 22px;" onclick="uploadData()">Upload to Drive</button>
@@ -219,8 +267,11 @@
   var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuJGRhvR0ntrVBpBnn4RYD4GfsSuxhKwp3C3Hz0Jx0oXFVIfeCW9Mu8h0i5r2LUk8I/exec";
 
   var currentStudent = null;
-  var photoBase64 = null;
-  var signBase64 = null;
+  var photoRawImg = null;
+  var signRawImg = null;
+  var compressedPhotoBase64 = null;
+  var compressedSignBase64 = null;
+  var combinedBase64 = null;
 
   async function verifyRegdNo() {
     var val = document.getElementById("regdNoInput").value.trim().toUpperCase();
@@ -268,7 +319,6 @@
     document.getElementById("detailsBox").style.display = "none";
     document.getElementById("regdNoInput").value = "";
     document.getElementById("lookupError").style.display = "none";
-    alert("Verification cancelled. You can enter your Regd No. again.");
   }
 
   function proceedToUpload() {
@@ -276,40 +326,150 @@
     document.getElementById("step2").classList.add("active");
   }
 
-  function handleFileSelect(event, previewId, type) {
+  // Helper to calculate approx KB from base64
+  function getKbSize(base64) {
+    var str = base64.indexOf(",") > -1 ? base64.split(",")[1] : base64;
+    return Math.round((str.length * 3 / 4) / 1024);
+  }
+
+  // Handle and compress individual file
+  function handleImageSelection(event, type) {
     var file = event.target.files[0];
     if (!file) return;
 
     var reader = new FileReader();
     reader.onload = function(e) {
-      var img = document.getElementById(previewId);
-      img.src = e.target.result;
-      img.style.display = "block";
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement("canvas");
+        var ctx = canvas.getContext("2d");
 
-      if (type === "photo") photoBase64 = e.target.result;
-      if (type === "sign") signBase64 = e.target.result;
+        if (type === "photo") {
+          // Photo standard: 300 x 380 px, target under 35 KB
+          canvas.width = 300;
+          canvas.height = 380;
+
+          // Solid white base layer handles PNG transparency cleanly
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // Center and aspect-fit the photo
+          var scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+          var drawW = img.width * scale;
+          var drawH = img.height * scale;
+          var offsetX = (canvas.width - drawW) / 2;
+          var offsetY = (canvas.height - drawH) / 2;
+          ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+
+          compressedPhotoBase64 = canvas.toDataURL("image/jpeg", 0.74);
+          photoRawImg = img;
+
+          document.getElementById("photoPreview").src = compressedPhotoBase64;
+          document.getElementById("photoSizeTag").innerText = "Ready • Size: ~" + getKbSize(compressedPhotoBase64) + " KB";
+          document.getElementById("photoBox").style.display = "block";
+
+        } else {
+          // Signature standard: 300 x 100 px, target under 15 KB
+          canvas.width = 300;
+          canvas.height = 100;
+
+          // Solid white base layer prevents black background on transparent PNG
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          var scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+          var drawW = img.width * scale;
+          var drawH = img.height * scale;
+          var offsetX = (canvas.width - drawW) / 2;
+          var offsetY = (canvas.height - drawH) / 2;
+          ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+
+          compressedSignBase64 = canvas.toDataURL("image/jpeg", 0.70);
+          signRawImg = img;
+
+          document.getElementById("signPreview").src = compressedSignBase64;
+          document.getElementById("signSizeTag").innerText = "Ready • Size: ~" + getKbSize(compressedSignBase64) + " KB";
+          document.getElementById("signBox").style.display = "block";
+        }
+
+        // Generate combined card when both are present
+        if (photoRawImg && signRawImg) {
+          generateCombinedCard();
+        }
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
 
+  // Generates combined Photo + Signature Card
+  function generateCombinedCard() {
+    var width = 350;
+    var photoHeight = 440;
+    var signHeight = 130;
+    var totalHeight = photoHeight + signHeight;
+
+    var canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = totalHeight;
+    var ctx = canvas.getContext("2d");
+
+    // Pure white canvas
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, width, totalHeight);
+
+    // Draw Photo centered in top area
+    var pScale = Math.min(width / photoRawImg.width, photoHeight / photoRawImg.height);
+    var pW = photoRawImg.width * pScale;
+    var pH = photoRawImg.height * pScale;
+    var pX = (width - pW) / 2;
+    var pY = (photoHeight - pH) / 2;
+    ctx.drawImage(photoRawImg, pX, pY, pW, pH);
+
+    // Subtle divider line
+    ctx.strokeStyle = "#E2E8F0";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, photoHeight);
+    ctx.lineTo(width, photoHeight);
+    ctx.stroke();
+
+    // Draw Signature centered in bottom area
+    var sScale = Math.min((width * 0.88) / signRawImg.width, (signHeight - 20) / signRawImg.height);
+    var sW = signRawImg.width * sScale;
+    var sH = signRawImg.height * sScale;
+    var sX = (width - sW) / 2;
+    var sY = photoHeight + (signHeight - sH) / 2;
+    ctx.drawImage(signRawImg, sX, sY, sW, sH);
+
+    // Export pure JPG under 50 KB
+    combinedBase64 = canvas.toDataURL("image/jpeg", 0.76);
+
+    document.getElementById("combinedPreview").src = combinedBase64;
+    document.getElementById("combinedSizeTag").innerText = "Merged Card Size: ~" + getKbSize(combinedBase64) + " KB";
+    document.getElementById("combinedBox").style.display = "block";
+  }
+
+  // Upload all 3 files
   async function uploadData() {
     var btn = document.getElementById("uploadBtn");
     var status = document.getElementById("statusMessage");
     var links = document.getElementById("resultLinks");
 
-    if (!photoBase64 || !signBase64) {
+    if (!compressedPhotoBase64 || !compressedSignBase64 || !combinedBase64) {
       alert("Please select both your Photo and Signature before uploading.");
       return;
     }
 
     btn.disabled = true;
     status.style.color = "#2563eb";
-    status.innerText = "Uploading files to Google Drive...";
+    status.innerText = "Compressing & uploading files to Google Drive...";
 
     var payload = {
       regdNo: currentStudent.regdNo,
-      photo: photoBase64,
-      signature: signBase64
+      photo: compressedPhotoBase64,
+      signature: compressedSignBase64,
+      combined: combinedBase64
     };
 
     try {
@@ -328,8 +488,9 @@
         btn.style.display = "none";
 
         links.innerHTML = `
-          <a class="file-btn" href="${data.photoUrl}" target="_blank">View Uploaded Photo in Drive</a>
-          <a class="file-btn" href="${data.signUrl}" target="_blank">View Uploaded Signature in Drive</a>
+          <a class="file-btn" href="${data.photoUrl}" target="_blank">View Photo in Drive</a>
+          <a class="file-btn" href="${data.signUrl}" target="_blank">View Signature in Drive</a>
+          <a class="file-btn combined-btn" href="${data.combinedUrl}" target="_blank">View Combined Card in Drive</a>
         `;
         links.style.display = "block";
       } else {
