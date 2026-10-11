@@ -384,7 +384,7 @@
     reader.readAsDataURL(file);
   }
 
-  // Merged Card: strictly 350 x 450 px passport frame with photo on top and signature below
+   // Merged Card: strictly 350 x 450 px passport frame with border, photo on top, signature below
   function generateCombinedPassportCard() {
     var totalW = 350;
     var totalH = 450;
@@ -412,7 +412,7 @@
     ctx.drawImage(photoRawImg, 0, 0, drawW, drawH);
     ctx.restore();
 
-    // 2. Crisp boundary divider line
+    // 2. Crisp boundary divider line between photo and signature
     ctx.strokeStyle = "#CBD5E1";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -431,6 +431,12 @@
 
     ctx.drawImage(signRawImg, sX, sY, sW, sH);
 
+    // 4. Outer border around the entire passport-size card
+    ctx.strokeStyle = "#94A3B8"; // Professional slate border
+    ctx.lineWidth = 2;
+    // Offset by 1px so the stroke renders completely inside the 350x450 canvas
+    ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
+
     // Export pure JPG under 35 KB
     combinedBase64 = canvas.toDataURL("image/jpeg", 0.74);
 
@@ -438,7 +444,6 @@
     document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: ~" + getKbSize(combinedBase64) + " KB";
     document.getElementById("combinedBox").style.display = "block";
   }
-
   async function uploadData() {
     var btn = document.getElementById("uploadBtn");
     var status = document.getElementById("statusMessage");
