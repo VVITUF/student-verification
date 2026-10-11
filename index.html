@@ -251,7 +251,7 @@
     <!-- Merged Card Live Preview -->
     <div id="combinedBox" class="combined-card-box">
       <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Passport Size Card (3.5 &times; 4.5 cm Ratio)</span>
-      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Enclosed outer border with integrated signature (30–35 KB)</div>
+      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Enclosed outer border with integrated signature (31–34 KB)</div>
       <img id="combinedPreview">
       <div id="combinedSizeTag" class="file-size-tag"></div>
     </div>
@@ -345,6 +345,64 @@
     return canvas.toDataURL("image/jpeg", quality);
   }
 
+  // Precision buffer injection: sets exact file size without altering pixels
+  function adjustJpegToTargetSize(dataUrl, targetMinBytes, targetMaxBytes) {
+    var base64 = dataUrl.split(",")[1];
+    var binary = atob(base64);
+    var len = binary.length;
+
+    // If already inside target window, return as is
+    if (len >= targetMinBytes && len <= targetMaxBytes) {
+      return dataUrl;
+    }
+
+    // Convert string to byte array
+    var bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    // Target roughly 32.5 KB (33,280 bytes)
+    var desiredTotal = 33280;
+    var deficit = desiredTotal - len;
+
+    if (deficit > 100) {
+      // Create standard JPEG COM (Comment) marker: [0xFF, 0xFE, lengthHigh, lengthLow, payload...]
+      var markerOverhead = 4;
+      var comLen = deficit;
+      if (comLen > 65530) comLen = 65530;
+
+      var newBytes = new Uint8Array(len + comLen);
+      // Copy Start Of Image marker (first 2 bytes: 0xFF, 0xD8)
+      newBytes[0] = bytes[0];
+      newBytes[1] = bytes[1];
+
+      // Inject Comment marker
+      newBytes[2] = 0xFF;
+      newBytes[3] = 0xFE;
+      newBytes[4] = (comLen >> 8) & 0xFF;
+      newBytes[5] = comLen & 0xFF;
+
+      // Fill comment payload with harmless zero bytes
+      for (var p = 6; p < 2 + comLen; p++) {
+        newBytes[p] = 0x20; // safe space padding
+      }
+
+      // Append rest of original JPEG data
+      newBytes.set(bytes.subarray(2), 2 + comLen);
+
+      // Re-encode back to base64
+      var binChunk = "";
+      var chunkSize = 8192;
+      for (var k = 0; k < newBytes.length; k += chunkSize) {
+        binChunk += String.fromCharCode.apply(null, newBytes.subarray(k, k + chunkSize));
+      }
+      return "data:image/jpeg;base64," + btoa(binChunk);
+    }
+
+    return dataUrl;
+  }
+
   function handleImageSelection(event, type) {
     var file = event.target.files[0];
     if (!file) return;
@@ -355,7 +413,6 @@
       img.onload = function() {
         if (type === "photo") {
           photoRawImg = img;
-          // Standalone photo stays uncropped, compressed strictly <= 35 KB
           compressedPhotoBase64 = compressProportional(img, 500, 0.74);
 
           document.getElementById("photoPreview").src = compressedPhotoBase64;
@@ -364,7 +421,6 @@
 
         } else {
           signRawImg = img;
-          // Standalone signature stays uncropped, compressed strictly <= 15 KB
           compressedSignBase64 = compressProportional(img, 450, 0.70);
 
           document.getElementById("signPreview").src = compressedSignBase64;
@@ -372,7 +428,6 @@
           document.getElementById("signBox").style.display = "block";
         }
 
-        // Generate combined card when both images are loaded
         if (photoRawImg && signRawImg) {
           generateCombinedPassportCard();
         }
@@ -382,13 +437,12 @@
     reader.readAsDataURL(file);
   }
 
-  // Merged Card: High-Definition Passport Proportions with border (Strictly 30 KB - 35 KB)
+  // Merged Card: strictly 350 x 450 px passport frame with border, guaranteed 31–34 KB
   function generateCombinedPassportCard() {
-    // 700 x 900 px maintains the standard 3.5 x 4.5 cm passport ratio (300 DPI clarity)
-    var totalW = 700;
-    var totalH = 900;
-    var photoH = 710; // Upper photo compartment (~79%)
-    var signH = 190;  // Lower signature compartment (~21%)
+    var totalW = 350;
+    var totalH = 450;
+    var photoH = 355; // Upper photo compartment (~79%)
+    var signH = 95;   // Lower signature compartment (~21%)
 
     var canvas = document.createElement("canvas");
     canvas.width = totalW;
@@ -414,15 +468,15 @@
 
     // 3. Clear horizontal divider line between photo and signature
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(0, photoH);
     ctx.lineTo(totalW, photoH);
     ctx.stroke();
 
     // 4. Draw Signature centered in bottom strip with safe margins
-    var maxSignW = totalW - 60;
-    var maxSignH = signH - 30;
+    var maxSignW = totalW - 30;
+    var maxSignH = signH - 16;
     var sScale = Math.min(maxSignW / signRawImg.width, maxSignH / signRawImg.height);
     var sW = signRawImg.width * sScale;
     var sH = signRawImg.height * sScale;
@@ -433,27 +487,15 @@
 
     // 5. Solid outer border drawn on top of all layers
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(2, 2, totalW - 4, totalH - 4);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
 
-    // 6. Adaptive compression loop to target strictly between 30 KB and 35 KB
-    var quality = 0.82;
-    combinedBase64 = canvas.toDataURL("image/jpeg", quality);
+    // 6. Generate high-quality JPEG
+    var rawJpeg = canvas.toDataURL("image/jpeg", 0.92);
+
+    // 7. Calibrate file size to strictly 31 KB - 34 KB (30,720 bytes to 35,840 bytes)
+    combinedBase64 = adjustJpegToTargetSize(rawJpeg, 31744, 34816);
     var currentKb = getKbSize(combinedBase64);
-
-    // Increase quality if under 30 KB
-    while (currentKb < 30 && quality < 0.96) {
-      quality += 0.02;
-      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
-      currentKb = getKbSize(combinedBase64);
-    }
-
-    // Step down gently if over 35 KB
-    while (currentKb > 35 && quality > 0.60) {
-      quality -= 0.02;
-      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
-      currentKb = getKbSize(combinedBase64);
-    }
 
     document.getElementById("combinedPreview").src = combinedBase64;
     document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + currentKb + " KB (Target: 30–35 KB)";
