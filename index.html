@@ -325,9 +325,18 @@
     document.getElementById("step2").classList.add("active");
   }
 
-  function getKbSize(base64) {
-    var str = base64.indexOf(",") > -1 ? base64.split(",")[1] : base64;
-    return Math.round((str.length * 3 / 4) / 1024);
+  // Exact physical byte count from base64 data URL
+  function getExactByteSize(dataUrl) {
+    var base64 = dataUrl.indexOf(",") > -1 ? dataUrl.split(",")[1] : dataUrl;
+    try {
+      return atob(base64).length;
+    } catch(e) {
+      return Math.round(base64.length * 3 / 4);
+    }
+  }
+
+  function getKbSize(dataUrl) {
+    return (getExactByteSize(dataUrl) / 1024).toFixed(1);
   }
 
   function compressProportional(img, maxDim, quality) {
@@ -357,7 +366,7 @@
           compressedPhotoBase64 = compressProportional(img, 500, 0.74);
 
           document.getElementById("photoPreview").src = compressedPhotoBase64;
-          document.getElementById("photoSizeTag").innerText = "Photo Ready • ~" + getKbSize(compressedPhotoBase64) + " KB";
+          document.getElementById("photoSizeTag").innerText = "Photo Ready • " + getKbSize(compressedPhotoBase64) + " KB";
           document.getElementById("photoBox").style.display = "block";
 
         } else {
@@ -365,7 +374,7 @@
           compressedSignBase64 = compressProportional(img, 450, 0.70);
 
           document.getElementById("signPreview").src = compressedSignBase64;
-          document.getElementById("signSizeTag").innerText = "Signature Ready • ~" + getKbSize(compressedSignBase64) + " KB";
+          document.getElementById("signSizeTag").innerText = "Signature Ready • " + getKbSize(compressedSignBase64) + " KB";
           document.getElementById("signBox").style.display = "block";
         }
 
@@ -378,13 +387,13 @@
     reader.readAsDataURL(file);
   }
 
-  // Exact 3.5 : 4.5 passport geometry with native physical weight strictly 31–34 KB
+  // Exact 3.5 : 4.5 passport geometry calibrated strictly to 31.0 KB – 34.5 KB
   function generateCombinedPassportCard() {
-    // 480 x 617 px (Ratio = 0.7779, exactly 3.5 cm / 4.5 cm passport size)
-    var totalW = 480;
-    var totalH = 617;
-    var photoH = 485; // Upper photo compartment (~78.6%)
-    var signH = 132;  // Lower signature compartment (~21.4%)
+    // 450 x 579 px (Ratio: 0.7772, exactly 3.5 cm / 4.5 cm)
+    var totalW = 450;
+    var totalH = 579;
+    var photoH = 455; // Upper photo compartment (~78.6%)
+    var signH = 124;  // Lower signature compartment (~21.4%)
 
     var canvas = document.createElement("canvas");
     canvas.width = totalW;
@@ -408,7 +417,7 @@
     ctx.drawImage(photoRawImg, drawX, 0, drawW, drawH);
     ctx.restore();
 
-    // 3. Clear horizontal divider line between photo and signature
+    // 3. Divider line between photo and signature
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -416,9 +425,9 @@
     ctx.lineTo(totalW, photoH);
     ctx.stroke();
 
-    // 4. Draw Signature centered in bottom strip with safe margins
+    // 4. Draw Signature centered in bottom strip
     var maxSignW = totalW - 40;
-    var maxSignH = signH - 24;
+    var maxSignH = signH - 20;
     var sScale = Math.min(maxSignW / signRawImg.width, maxSignH / signRawImg.height);
     var sW = signRawImg.width * sScale;
     var sH = signRawImg.height * sScale;
@@ -427,32 +436,41 @@
 
     ctx.drawImage(signRawImg, sX, sY, sW, sH);
 
-    // 5. Solid outer border drawn on top of all layers
+    // 5. Solid outer border on top
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 2.5;
     ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
 
-    // 6. Natural JPEG compression search: strictly 31 KB - 34 KB
-    var quality = 0.88;
-    combinedBase64 = canvas.toDataURL("image/jpeg", quality);
-    var currentKb = getKbSize(combinedBase64);
+    // 6. Strict physical byte window: Min 31.0 KB (31,744 B) to Max 34.5 KB (35,328 B)
+    var MIN_BYTES = 31744; // 31.0 KB
+    var MAX_BYTES = 35328; // 34.5 KB (strictly below 35 KB)
 
-    // If below 31 KB, step quality up
-    while (currentKb < 31 && quality < 0.98) {
-      quality += 0.02;
-      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
-      currentKb = getKbSize(combinedBase64);
+    var low = 0.50;
+    var high = 0.96;
+    var bestDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+
+    // Binary search for exact quality value satisfying bounds
+    for (var iter = 0; iter < 10; iter++) {
+      var mid = (low + high) / 2;
+      var testUrl = canvas.toDataURL("image/jpeg", mid);
+      var bytes = getExactByteSize(testUrl);
+
+      if (bytes <= MAX_BYTES) {
+        bestDataUrl = testUrl;
+        if (bytes >= MIN_BYTES) {
+          break; // Found the target range
+        }
+        low = mid; // Step up quality to get >= 31 KB
+      } else {
+        high = mid; // Step down quality to stay < 35 KB
+      }
     }
 
-    // If over 35 KB, step quality down
-    while (currentKb > 35 && quality > 0.65) {
-      quality -= 0.02;
-      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
-      currentKb = getKbSize(combinedBase64);
-    }
+    combinedBase64 = bestDataUrl;
+    var finalKb = (getExactByteSize(combinedBase64) / 1024).toFixed(1);
 
     document.getElementById("combinedPreview").src = combinedBase64;
-    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + currentKb + " KB (Target: 31–34 KB)";
+    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + finalKb + " KB (Target: 31–34 KB)";
     document.getElementById("combinedBox").style.display = "block";
   }
 
