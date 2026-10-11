@@ -251,7 +251,7 @@
     <!-- Merged Card Live Preview -->
     <div id="combinedBox" class="combined-card-box">
       <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Passport Size Card (3.5 &times; 4.5 cm Ratio)</span>
-      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Enclosed outer border with integrated signature (30–34 KB)</div>
+      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Enclosed outer border with integrated signature (31–34 KB)</div>
       <img id="combinedPreview">
       <div id="combinedSizeTag" class="file-size-tag"></div>
     </div>
@@ -387,12 +387,13 @@
     reader.readAsDataURL(file);
   }
 
-  // Exact 3.5 : 4.5 passport geometry strictly clamped between 30.0 KB and 34.0 KB
+  // Exact 3.5 : 4.5 passport geometry calibrated strictly to 31.0 KB – 34.0 KB
   function generateCombinedPassportCard() {
-    var totalW = 450;
-    var totalH = 579;
-    var photoH = 455; // Upper photo compartment (~78.6%)
-    var signH = 124;  // Lower signature compartment (~21.4%)
+    // 410 x 527 px (Ratio: 0.7779, exact 3.5 cm / 4.5 cm ratio)
+    var totalW = 410;
+    var totalH = 527;
+    var photoH = 415; // Upper photo compartment (~78.7%)
+    var signH = 112;  // Lower signature compartment (~21.3%)
 
     var canvas = document.createElement("canvas");
     canvas.width = totalW;
@@ -416,7 +417,7 @@
     ctx.drawImage(photoRawImg, drawX, 0, drawW, drawH);
     ctx.restore();
 
-    // 3. Divider line between photo and signature
+    // 3. Clear divider line between photo and signature
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -426,7 +427,7 @@
 
     // 4. Draw Signature centered in bottom strip
     var maxSignW = totalW - 40;
-    var maxSignH = signH - 20;
+    var maxSignH = signH - 18;
     var sScale = Math.min(maxSignW / signRawImg.width, maxSignH / signRawImg.height);
     var sW = signRawImg.width * sScale;
     var sH = signRawImg.height * sScale;
@@ -440,23 +441,23 @@
     ctx.lineWidth = 2.5;
     ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
 
-    // 6. Strict Hard Bounds: Max 34.0 KB (34,816 bytes), Min 30.0 KB (30,720 bytes)
+    // 6. Hard limit: Max 34.0 KB (34,816 bytes) and Min 31.0 KB (31,744 bytes)
     var MAX_BYTES = 34816; // 34.0 KB strictly
-    var MIN_BYTES = 30720; // 30.0 KB
+    var MIN_BYTES = 31744; // 31.0 KB
 
-    var quality = 0.86;
+    var quality = 0.88;
     combinedBase64 = canvas.toDataURL("image/jpeg", quality);
     var currentBytes = getExactByteSize(combinedBase64);
 
-    // Rule 1: If above 34.0 KB, step quality DOWN until strictly <= 34.0 KB
+    // Step down quality until strictly <= 34.0 KB
     while (currentBytes > MAX_BYTES && quality > 0.40) {
       quality -= 0.01;
       combinedBase64 = canvas.toDataURL("image/jpeg", quality);
       currentBytes = getExactByteSize(combinedBase64);
     }
 
-    // Rule 2: If below 30.0 KB, step quality UP cautiously without crossing 34.0 KB
-    while (currentBytes < MIN_BYTES && quality < 0.95) {
+    // Step up quality cautiously if below 31.0 KB
+    while (currentBytes < MIN_BYTES && quality < 0.96) {
       var nextUrl = canvas.toDataURL("image/jpeg", quality + 0.01);
       var nextBytes = getExactByteSize(nextUrl);
       if (nextBytes <= MAX_BYTES) {
@@ -471,7 +472,7 @@
     var finalKb = (getExactByteSize(combinedBase64) / 1024).toFixed(1);
 
     document.getElementById("combinedPreview").src = combinedBase64;
-    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + finalKb + " KB (Target: 30–34 KB)";
+    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + finalKb + " KB (Target: 31–34 KB)";
     document.getElementById("combinedBox").style.display = "block";
   }
 
