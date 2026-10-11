@@ -139,12 +139,12 @@
       margin-top: 8px;
       text-align: center;
       background: #f8fafc;
-      padding: 6px;
+      padding: 8px;
       border-radius: 6px;
       border: 1px solid #e2e8f0;
     }
     .preview-box img {
-      max-height: 140px;
+      max-height: 150px;
       max-width: 100%;
       object-fit: contain;
       border-radius: 4px;
@@ -166,11 +166,11 @@
     }
     .combined-card-box img {
       display: block;
-      margin: 8px auto 0 auto;
-      max-width: 200px;
+      margin: 10px auto 0 auto;
+      max-width: 180px;
       border: 1.5px solid #cbd5e1;
       border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
     .status {
       text-align: center;
@@ -191,7 +191,7 @@
       margin-top: 8px;
     }
     .file-btn.combined-btn {
-      background: #4338ca;
+      background: #15803d;
     }
   </style>
 </head>
@@ -225,12 +225,12 @@
   <!-- Step 2: Upload Files -->
   <div id="step2" class="step">
     <h2>Upload Files</h2>
-    <p>Upload your photo and signature. Files are automatically compressed.</p>
+    <p>Upload your photo and signature. Files are automatically formatted.</p>
 
     <!-- Photo Input -->
     <div class="upload-group">
       <label>1. Passport Size Photo:</label>
-      <div class="file-hint">Auto-compressed to ~30 KB (JPG, 300x380 px)</div>
+      <div class="file-hint">Standard 3.5 x 4.5 cm proportion (Auto-compressed &le; 35 KB)</div>
       <input type="file" id="photoInput" accept="image/*" onchange="handleImageSelection(event, 'photo')">
       <div id="photoBox" class="preview-box">
         <img id="photoPreview">
@@ -241,7 +241,7 @@
     <!-- Signature Input -->
     <div class="upload-group">
       <label>2. Signature:</label>
-      <div class="file-hint">Auto-compressed to ~12 KB (JPG, 300x100 px)</div>
+      <div class="file-hint">White background strip (Auto-compressed &le; 15 KB)</div>
       <input type="file" id="signInput" accept="image/*" onchange="handleImageSelection(event, 'sign')">
       <div id="signBox" class="preview-box">
         <img id="signPreview">
@@ -249,10 +249,10 @@
       </div>
     </div>
 
-    <!-- Live Merged Card Preview -->
+    <!-- Merged Card Live Preview -->
     <div id="combinedBox" class="combined-card-box">
-      <span style="font-size: 0.85rem; font-weight: 700; color: #334155;">Preview: Merged Photo & Signature Card</span>
-      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">This merged file will be saved in IMAGE_AND_SIGN</div>
+      <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Passport Size Card (350 &times; 450 px)</span>
+      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Photo with integrated signature (&le; 35 KB)</div>
       <img id="combinedPreview">
       <div id="combinedSizeTag" class="file-size-tag"></div>
     </div>
@@ -326,13 +326,31 @@
     document.getElementById("step2").classList.add("active");
   }
 
-  // Helper to calculate approx KB from base64
   function getKbSize(base64) {
     var str = base64.indexOf(",") > -1 ? base64.split(",")[1] : base64;
     return Math.round((str.length * 3 / 4) / 1024);
   }
 
-  // Handle and compress individual file
+  // Smart draw: aspect-fill to avoid stretching while centering head/face
+  function drawAspectFill(ctx, img, targetX, targetY, targetW, targetH) {
+    var scale = Math.max(targetW / img.width, targetH / img.height);
+    var renderW = img.width * scale;
+    var renderH = img.height * scale;
+    var renderX = targetX + (targetW - renderW) / 2;
+    var renderY = targetY + (targetH - renderH) / 2;
+    ctx.drawImage(img, renderX, renderY, renderW, renderH);
+  }
+
+  // Smart draw: aspect-fit inside bounding box (for signatures)
+  function drawAspectFit(ctx, img, targetX, targetY, targetW, targetH) {
+    var scale = Math.min(targetW / img.width, targetH / img.height);
+    var renderW = img.width * scale;
+    var renderH = img.height * scale;
+    var renderX = targetX + (targetW - renderW) / 2;
+    var renderY = targetY + (targetH - renderH) / 2;
+    ctx.drawImage(img, renderX, renderY, renderW, renderH);
+  }
+
   function handleImageSelection(event, type) {
     var file = event.target.files[0];
     if (!file) return;
@@ -345,56 +363,44 @@
         var ctx = canvas.getContext("2d");
 
         if (type === "photo") {
-          // Photo standard: 300 x 380 px, target under 35 KB
+          // Standard passport proportion: 300 x 385 px (~3.5 x 4.5 cm)
           canvas.width = 300;
-          canvas.height = 380;
+          canvas.height = 385;
 
-          // Solid white base layer handles PNG transparency cleanly
+          // Pure white background
           ctx.fillStyle = "#FFFFFF";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          // Center and aspect-fit the photo
-          var scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-          var drawW = img.width * scale;
-          var drawH = img.height * scale;
-          var offsetX = (canvas.width - drawW) / 2;
-          var offsetY = (canvas.height - drawH) / 2;
-          ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+          drawAspectFill(ctx, img, 0, 0, canvas.width, canvas.height);
 
           compressedPhotoBase64 = canvas.toDataURL("image/jpeg", 0.74);
           photoRawImg = img;
 
           document.getElementById("photoPreview").src = compressedPhotoBase64;
-          document.getElementById("photoSizeTag").innerText = "Ready • Size: ~" + getKbSize(compressedPhotoBase64) + " KB";
+          document.getElementById("photoSizeTag").innerText = "Photo Ready • ~" + getKbSize(compressedPhotoBase64) + " KB";
           document.getElementById("photoBox").style.display = "block";
 
         } else {
-          // Signature standard: 300 x 100 px, target under 15 KB
+          // Standard signature strip: 300 x 100 px
           canvas.width = 300;
           canvas.height = 100;
 
-          // Solid white base layer prevents black background on transparent PNG
+          // White background prevents transparent PNG black boxes
           ctx.fillStyle = "#FFFFFF";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          var scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-          var drawW = img.width * scale;
-          var drawH = img.height * scale;
-          var offsetX = (canvas.width - drawW) / 2;
-          var offsetY = (canvas.height - drawH) / 2;
-          ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+          drawAspectFit(ctx, img, 10, 10, canvas.width - 20, canvas.height - 20);
 
           compressedSignBase64 = canvas.toDataURL("image/jpeg", 0.70);
           signRawImg = img;
 
           document.getElementById("signPreview").src = compressedSignBase64;
-          document.getElementById("signSizeTag").innerText = "Ready • Size: ~" + getKbSize(compressedSignBase64) + " KB";
+          document.getElementById("signSizeTag").innerText = "Signature Ready • ~" + getKbSize(compressedSignBase64) + " KB";
           document.getElementById("signBox").style.display = "block";
         }
 
-        // Generate combined card when both are present
         if (photoRawImg && signRawImg) {
-          generateCombinedCard();
+          generateCombinedPassportCard();
         }
       };
       img.src = e.target.result;
@@ -402,55 +408,44 @@
     reader.readAsDataURL(file);
   }
 
-  // Generates combined Photo + Signature Card
-  function generateCombinedCard() {
-    var width = 350;
-    var photoHeight = 440;
-    var signHeight = 130;
-    var totalHeight = photoHeight + signHeight;
+  // Generates complete Combined Card locked at standard 350 x 450 px
+  function generateCombinedPassportCard() {
+    var totalW = 350;
+    var totalH = 450;
+    var photoH = 350; // Top ~78%
+    var signH = 100;  // Bottom ~22%
 
     var canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = totalHeight;
+    canvas.width = totalW;
+    canvas.height = totalH;
     var ctx = canvas.getContext("2d");
 
-    // Pure white canvas
+    // Pure white canvas background
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, width, totalHeight);
+    ctx.fillRect(0, 0, totalW, totalH);
 
-    // Draw Photo centered in top area
-    var pScale = Math.min(width / photoRawImg.width, photoHeight / photoRawImg.height);
-    var pW = photoRawImg.width * pScale;
-    var pH = photoRawImg.height * pScale;
-    var pX = (width - pW) / 2;
-    var pY = (photoHeight - pH) / 2;
-    ctx.drawImage(photoRawImg, pX, pY, pW, pH);
+    // 1. Draw photo in top 350 x 350 area
+    drawAspectFill(ctx, photoRawImg, 0, 0, totalW, photoH);
 
-    // Subtle divider line
-    ctx.strokeStyle = "#E2E8F0";
-    ctx.lineWidth = 1.5;
+    // 2. Crisp divider line
+    ctx.strokeStyle = "#CBD5E1";
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0, photoHeight);
-    ctx.lineTo(width, photoHeight);
+    ctx.moveTo(0, photoH);
+    ctx.lineTo(totalW, photoH);
     ctx.stroke();
 
-    // Draw Signature centered in bottom area
-    var sScale = Math.min((width * 0.88) / signRawImg.width, (signHeight - 20) / signRawImg.height);
-    var sW = signRawImg.width * sScale;
-    var sH = signRawImg.height * sScale;
-    var sX = (width - sW) / 2;
-    var sY = photoHeight + (signHeight - sH) / 2;
-    ctx.drawImage(signRawImg, sX, sY, sW, sH);
+    // 3. Draw signature in bottom 350 x 100 area
+    drawAspectFit(ctx, signRawImg, 15, photoH + 8, totalW - 30, signH - 16);
 
-    // Export pure JPG under 50 KB
-    combinedBase64 = canvas.toDataURL("image/jpeg", 0.76);
+    // Export pure JPG strictly under 35 KB
+    combinedBase64 = canvas.toDataURL("image/jpeg", 0.74);
 
     document.getElementById("combinedPreview").src = combinedBase64;
-    document.getElementById("combinedSizeTag").innerText = "Merged Card Size: ~" + getKbSize(combinedBase64) + " KB";
+    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: ~" + getKbSize(combinedBase64) + " KB";
     document.getElementById("combinedBox").style.display = "block";
   }
 
-  // Upload all 3 files
   async function uploadData() {
     var btn = document.getElementById("uploadBtn");
     var status = document.getElementById("statusMessage");
@@ -463,7 +458,7 @@
 
     btn.disabled = true;
     status.style.color = "#2563eb";
-    status.innerText = "Compressing & uploading files to Google Drive...";
+    status.innerText = "Uploading files to Google Drive...";
 
     var payload = {
       regdNo: currentStudent.regdNo,
