@@ -278,7 +278,7 @@
       <input type="email" id="emailInput" placeholder="yourname@gmail.com" autocomplete="off">
       
       <div class="email-warning-note">
-        ⚠️ <b>Please carefully verify your email ID:</b> The verification OTP will be sent to this exact address. If typed incorrectly, you will not receive the code.
+        ⚠️ <b>Please carefully verify your email ID:</b> The verification OTP will be sent to this exact address from <b>dr_csb@thinkers.co.in</b>. If typed incorrectly, you will not receive the code.
       </div>
 
       <p style="font-weight: 600; color: #0f172a; margin-bottom: 6px;">Are these details correct?</p>
@@ -368,6 +368,7 @@
 </div>
 
 <script>
+  // NOTE: Replace this URL with the new Web App URL generated when you deploy from dr_csb@thinkers.co.in
   var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuJGRhvR0ntrVBpBnn4RYD4GfsSuxhKwp3C3Hz0Jx0oXFVIfeCW9Mu8h0i5r2LUk8I/exec";
 
   var currentStudent = null;
@@ -447,7 +448,6 @@
 
     document.getElementById("modalEmailDisplay").innerText = email;
     
-    // Reset the checkbox and disable the proceed button whenever opening
     var agreeCheckbox = document.getElementById("emailAgreeCheckbox");
     agreeCheckbox.checked = false;
     document.getElementById("confirmProceedBtn").disabled = true;
