@@ -1,344 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Verification & Upload</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    body {
-      margin: 0;
-      padding: 16px;
-      background: #f1f5f9;
-      color: #0f172a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 24px;
-      width: 100%;
-      max-width: 440px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-      position: relative;
-    }
-    h2 {
-      margin-top: 0;
-      margin-bottom: 6px;
-      font-size: 1.25rem;
-      color: #0f172a;
-    }
-    p {
-      color: #64748b;
-      font-size: 0.9rem;
-      margin-top: 0;
-      margin-bottom: 16px;
-      line-height: 1.4;
-    }
-    .step {
-      display: none;
-    }
-    .step.active {
-      display: block;
-    }
-    input[type="text"], input[type="email"] {
-      width: 100%;
-      padding: 12px 14px;
-      font-size: 1rem;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      outline: none;
-    }
-    #regdNoInput { text-transform: uppercase; }
-    input:focus { border-color: #2563eb; }
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #ffffff;
-      background: #2563eb;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background: #94a3b8;
-      cursor: not-allowed;
-    }
-    .danger { background: #dc2626; }
-    .success { background: #16a34a; }
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-    }
-    .details-box {
-      display: none;
-      background: #f8fafc;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 14px;
-      margin-top: 14px;
-    }
-    .details-box table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 12px;
-    }
-    .details-box td {
-      padding: 6px 0;
-      font-size: 0.92rem;
-      vertical-align: top;
-    }
-    .details-box td:first-child {
-      font-weight: 600;
-      width: 35%;
-      color: #475569;
-    }
-    .error-box {
-      display: none;
-      color: #dc2626;
-      background: #fee2e2;
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      margin-bottom: 12px;
-      font-weight: 500;
-    }
-    .email-warning-note {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: 6px;
-      padding: 8px 10px;
-      margin-bottom: 12px;
-      font-size: 0.78rem;
-      color: #92400e;
-      line-height: 1.35;
-    }
-    .upload-group { margin-top: 16px; }
-    .upload-group label {
-      display: block;
-      font-weight: 600;
-      font-size: 0.9rem;
-      margin-bottom: 4px;
-      color: #334155;
-    }
-    .file-hint {
-      font-size: 0.78rem;
-      color: #64748b;
-      margin-bottom: 6px;
-    }
-    input[type="file"] { width: 100%; font-size: 0.9rem; }
-    .preview-box {
-      display: none;
-      margin-top: 8px;
-      text-align: center;
-      background: #f8fafc;
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
-    }
-    .preview-box img {
-      max-height: 150px;
-      max-width: 100%;
-      object-fit: contain;
-      border-radius: 4px;
-    }
-    .file-size-tag {
-      font-size: 0.75rem;
-      color: #16a34a;
-      font-weight: 600;
-      margin-top: 4px;
-    }
-    .combined-card-box {
-      display: none;
-      margin-top: 18px;
-      padding: 14px;
-      background: #f8fafc;
-      border: 1.5px dashed #94a3b8;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .combined-card-box img {
-      display: block;
-      margin: 10px auto 0 auto;
-      max-width: 180px;
-      border-radius: 4px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .status {
-      text-align: center;
-      font-weight: 600;
-      margin-top: 14px;
-      font-size: 0.95rem;
-    }
-    .otp-panel {
-      display: none;
-      margin-top: 18px;
-      padding: 16px;
-      background: #eff6ff;
-      border: 1.5px solid #bfdbfe;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .otp-timer {
-      font-size: 0.92rem;
-      color: #1e40af;
-      font-weight: 700;
-      margin-bottom: 12px;
-    }
-    .otp-inputs {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .resend-btn {
-      background: #64748b;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      width: auto;
-      white-space: nowrap;
-    }
-
-    /* Modal dialog for email double-check */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(15, 23, 42, 0.6);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-    }
-    .modal-content {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 22px;
-      max-width: 380px;
-      width: 100%;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    }
-  </style>
-</head>
-<body>
-
-<div class="card">
-  <!-- Step 1: Verification -->
-  <div id="step1" class="step active">
-    <h2>Student Verification</h2>
-    <p>Enter your Registration Number to verify details.</p>
-
-    <div id="lookupError" class="error-box">No details found. Please enter the correct Regd No.</div>
-
-    <input type="text" id="regdNoInput" placeholder="e.g. 2026DCEBT10001" autocomplete="off">
-    <button id="searchBtn" onclick="verifyRegdNo()">Verify Regd No.</button>
-
-    <div id="detailsBox" class="details-box">
-      <table>
-        <tr><td>Regd No.:</td><td id="lblRegd"></td></tr>
-        <tr><td>Name:</td><td id="lblName"></td></tr>
-        <tr><td>Section:</td><td id="lblSection"></td></tr>
-      </table>
-
-      <label style="font-weight: 600; font-size: 0.88rem; color: #334155; display:block; margin-bottom: 4px;">Enter Active Gmail Address:</label>
-      <input type="email" id="emailInput" placeholder="yourname@gmail.com" autocomplete="off">
-      
-      <div class="email-warning-note">
-        ⚠️ <b>Please carefully verify your email ID:</b> The verification OTP will be sent to this exact address. If typed incorrectly, you will not receive the code.
-      </div>
-
-      <p style="font-weight: 600; color: #0f172a; margin-bottom: 6px;">Are these details correct?</p>
-      <div class="btn-row">
-        <button class="danger" onclick="exitPortal()">No (Exit)</button>
-        <button class="success" onclick="openEmailConfirmModal()">Yes (Proceed)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Step 2: Upload Files & OTP Submission -->
-  <div id="step2" class="step">
-    <h2>Upload Files</h2>
-    <p id="step2Subtitle">Upload photo & signature. Submission requires email OTP verification.</p>
-
-    <!-- Photo Input -->
-    <div class="upload-group">
-      <label>1. Passport Size Photo:</label>
-      <div class="file-hint">Original aspect preserved (&le; 35 KB)</div>
-      <input type="file" id="photoInput" accept="image/*" onchange="handleImageSelection(event, 'photo')">
-      <div id="photoBox" class="preview-box">
-        <img id="photoPreview">
-        <div id="photoSizeTag" class="file-size-tag"></div>
-      </div>
-    </div>
-
-    <!-- Signature Input -->
-    <div class="upload-group">
-      <label>2. Signature:</label>
-      <div class="file-hint">White background strip (&le; 15 KB)</div>
-      <input type="file" id="signInput" accept="image/*" onchange="handleImageSelection(event, 'sign')">
-      <div id="signBox" class="preview-box">
-        <img id="signPreview">
-        <div id="signSizeTag" class="file-size-tag"></div>
-      </div>
-    </div>
-
-    <!-- Merged Card Live Preview -->
-    <div id="combinedBox" class="combined-card-box">
-      <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Passport Size Card (3.5 &times; 4.5 cm Ratio)</span>
-      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Enclosed outer border with integrated signature (31–34 KB)</div>
-      <img id="combinedPreview">
-      <div id="combinedSizeTag" class="file-size-tag"></div>
-    </div>
-
-    <button id="sendOtpBtn" style="margin-top: 22px;" onclick="requestOtp()">Send OTP & Proceed</button>
-
-    <!-- OTP Input Section -->
-    <div id="otpPanel" class="otp-panel">
-      <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">Enter 6-Digit OTP</div>
-      <div id="otpDestinationLabel" style="font-size: 0.8rem; color: #475569; margin-bottom: 8px;"></div>
-      
-      <!-- Unified Single 180s Countdown -->
-      <div id="timerDisplay" class="otp-timer">OTP Expires in: 03:00</div>
-
-      <div class="otp-inputs">
-        <input type="text" id="otpCodeInput" maxlength="6" placeholder="123456" style="margin-bottom:0; text-align:center; letter-spacing: 4px; font-weight:bold; font-size:1.1rem;">
-        <button id="resendBtn" class="resend-btn" onclick="requestOtp()" disabled>Resend (180s)</button>
-      </div>
-
-      <button id="finalVerifyBtn" style="margin-top: 12px; background: #16a34a;" onclick="verifyAndUpload()">Verify OTP & Upload</button>
-    </div>
-
-    <div id="statusMessage" class="status"></div>
-  </div>
-</div>
-
-<!-- Email Confirmation Modal Dialog -->
-<div id="confirmEmailModal" class="modal-overlay">
-  <div class="modal-content">
-    <h3 style="margin-top: 0; margin-bottom: 8px; color: #0f172a; font-size: 1.1rem;">Confirm Email ID</h3>
-    <p style="font-size: 0.85rem; color: #475569; margin-bottom: 12px;">Please carefully verify your email ID. The verification OTP will be sent to this exact address:</p>
-    <div id="modalEmailDisplay" style="font-weight: 700; font-size: 1rem; color: #1e40af; background: #eff6ff; padding: 10px; border-radius: 6px; text-align: center; word-break: break-all; margin-bottom: 14px;"></div>
-    <div style="font-size: 0.78rem; color: #b45309; background: #fffbeb; padding: 8px; border-radius: 6px; margin-bottom: 16px;">
-      If typed incorrectly, you will not receive the code.
-    </div>
-    <div class="btn-row" style="margin-top: 0;">
-      <button style="background: #64748b;" onclick="closeEmailConfirmModal()">Edit Email</button>
-      <button class="success" onclick="confirmAndProceed()">Confirm & Proceed</button>
-    </div>
-  </div>
-</div>
-
 <script>
-  // Insert your deployed Apps Script Web App URL below
+  // Your Google Apps Script Web App URL
   var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuJGRhvR0ntrVBpBnn4RYD4GfsSuxhKwp3C3Hz0Jx0oXFVIfeCW9Mu8h0i5r2LUk8I/exec";
 
   var currentStudent = null;
@@ -352,17 +13,20 @@
   var otpCountdownInterval = null;
 
   async function verifyRegdNo() {
-    var val = document.getElementById("regdNoInput").value.trim().toUpperCase();
+    var regdInput = document.getElementById("regdNoInput");
+    var val = regdInput ? regdInput.value.trim().toUpperCase() : "";
     var errBox = document.getElementById("lookupError");
     var detailsBox = document.getElementById("detailsBox");
     var btn = document.getElementById("searchBtn");
 
-    errBox.style.display = "none";
-    detailsBox.style.display = "none";
+    if (errBox) errBox.style.display = "none";
+    if (detailsBox) detailsBox.style.display = "none";
 
     if (!val) {
-      errBox.innerText = "Please enter your Regd No.";
-      errBox.style.display = "block";
+      if (errBox) {
+        errBox.innerText = "Please enter your Regd No.";
+        errBox.style.display = "block";
+      }
       return;
     }
 
@@ -370,21 +34,33 @@
     btn.innerText = "Verifying...";
 
     try {
-      var res = await fetch(SCRIPT_URL + "?action=lookup&regdNo=" + encodeURIComponent(val));
+      var targetUrl = SCRIPT_URL + "?action=lookup&regdNo=" + encodeURIComponent(val);
+      
+      var res = await fetch(targetUrl, {
+        method: "GET",
+        mode: "cors",
+        redirect: "follow"
+      });
+
+      if (!res.ok) {
+        throw new Error("HTTP error " + res.status);
+      }
+
       var data = await res.json();
 
-      if (data.status === "found") {
+      if (data && data.status === "found") {
         currentStudent = data;
         document.getElementById("lblRegd").innerText = data.regdNo;
         document.getElementById("lblName").innerText = data.name;
         document.getElementById("lblSection").innerText = data.section;
         detailsBox.style.display = "block";
       } else {
-        errBox.innerText = "No details found. Please enter the correct Regd No.";
+        errBox.innerText = "No details found for " + val + ". Please check your Regd No.";
         errBox.style.display = "block";
       }
     } catch (e) {
-      errBox.innerText = "Verification failed. Check your network connection.";
+      console.error("Lookup error:", e);
+      errBox.innerText = "Verification failed: " + (e.message || "Network error. Please try again.");
       errBox.style.display = "block";
     } finally {
       btn.disabled = false;
@@ -526,8 +202,8 @@
     ctx.lineWidth = 2.5;
     ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
 
-    var MAX_BYTES = 34816; // 34.0 KB ceiling
-    var MIN_BYTES = 31744; // 31.0 KB floor
+    var MAX_BYTES = 34816;
+    var MIN_BYTES = 31744;
 
     var quality = 0.88;
     combinedBase64 = canvas.toDataURL("image/jpeg", quality);
@@ -571,16 +247,20 @@
 
     try {
       var url = SCRIPT_URL + "?action=sendOtp&email=" + encodeURIComponent(studentEmail) + "&regdNo=" + encodeURIComponent(currentStudent.regdNo);
-      var res = await fetch(url);
+      var res = await fetch(url, {
+        method: "GET",
+        mode: "cors",
+        redirect: "follow"
+      });
       var data = await res.json();
 
-      if (data.status === "otp_sent") {
+      if (data && data.status === "otp_sent") {
         document.getElementById("sendOtpBtn").style.display = "none";
         document.getElementById("otpPanel").style.display = "block";
         document.getElementById("otpDestinationLabel").innerText = "Sent to: " + studentEmail;
         startUnified180sTimer();
       } else {
-        alert("Failed to send OTP: " + (data.message || "Unknown error"));
+        alert("Failed to send OTP: " + (data ? data.message : "Unknown error"));
         btn.disabled = false;
         btn.innerText = "Send OTP & Proceed";
       }
@@ -591,7 +271,7 @@
     }
   }
 
-  // Single unified 180 seconds countdown
+  // Single unified 180-second countdown
   function startUnified180sTimer() {
     clearInterval(otpCountdownInterval);
 
@@ -655,7 +335,7 @@
 
       var data = await res.json();
 
-      if (data.status === "success") {
+      if (data && data.status === "success") {
         clearInterval(otpCountdownInterval);
 
         // Hide all inputs, previews, and OTP panels
@@ -671,7 +351,7 @@
         status.style.padding = "28px 10px";
         status.innerHTML = "✓ Uploaded successfully";
       } else {
-        alert(data.message || "Invalid OTP code.");
+        alert(data ? data.message : "Invalid OTP code.");
         status.innerText = "";
         verifyBtn.disabled = false;
       }
@@ -682,5 +362,3 @@
     }
   }
 </script>
-</body>
-</html>
