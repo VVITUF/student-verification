@@ -169,19 +169,6 @@
       margin-top: 14px;
       font-size: 0.95rem;
     }
-    .file-btn {
-      display: block;
-      text-align: center;
-      background: #0f766e;
-      color: #ffffff;
-      padding: 11px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.88rem;
-      margin-top: 8px;
-    }
-    .file-btn.combined-btn { background: #15803d; }
     .otp-panel {
       display: none;
       margin-top: 18px;
@@ -245,7 +232,7 @@
   <!-- Step 2: Upload Files & OTP Submission -->
   <div id="step2" class="step">
     <h2>Upload Files</h2>
-    <p>Upload photo & signature. Submission requires email OTP verification.</p>
+    <p id="step2Subtitle">Upload photo & signature. Submission requires email OTP verification.</p>
 
     <!-- Photo Input -->
     <div class="upload-group">
@@ -294,7 +281,6 @@
     </div>
 
     <div id="statusMessage" class="status"></div>
-    <div id="resultLinks" style="display:none; margin-top: 14px;"></div>
   </div>
 </div>
 
@@ -586,11 +572,11 @@
 
     var verifyBtn = document.getElementById("finalVerifyBtn");
     var status = document.getElementById("statusMessage");
-    var links = document.getElementById("resultLinks");
 
     verifyBtn.disabled = true;
     status.style.color = "#2563eb";
-    status.innerText = "Verifying OTP & uploading to Drive...";
+    status.style.fontSize = "0.95rem";
+    status.innerText = "Verifying OTP & uploading...";
 
     var payload = {
       regdNo: currentStudent.regdNo,
@@ -614,16 +600,19 @@
       if (data.status === "success") {
         clearInterval(timerInterval);
         clearInterval(resendInterval);
-        document.getElementById("otpPanel").style.display = "none";
-        status.style.color = "#16a34a";
-        status.innerText = "Verification successful! Files saved for " + currentStudent.regdNo;
 
-        links.innerHTML = `
-          <a class="file-btn" href="${data.photoUrl}" target="_blank">View Photo in Drive</a>
-          <a class="file-btn" href="${data.signUrl}" target="_blank">View Signature in Drive</a>
-          <a class="file-btn combined-btn" href="${data.combinedUrl}" target="_blank">View Combined Card in Drive</a>
-        `;
-        links.style.display = "block";
+        // Hide all input elements, previews, and OTP panels
+        document.getElementById("step2Subtitle").style.display = "none";
+        document.querySelectorAll(".upload-group").forEach(function(el) { el.style.display = "none"; });
+        document.getElementById("combinedBox").style.display = "none";
+        document.getElementById("sendOtpBtn").style.display = "none";
+        document.getElementById("otpPanel").style.display = "none";
+
+        // Display only the final success confirmation
+        status.style.color = "#16a34a";
+        status.style.fontSize = "1.2rem";
+        status.style.padding = "28px 10px";
+        status.innerHTML = "✓ Uploaded successfully";
       } else {
         alert(data.message || "Invalid OTP code.");
         status.innerText = "";
