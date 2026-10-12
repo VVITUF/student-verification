@@ -26,6 +26,7 @@
       width: 100%;
       max-width: 440px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      position: relative;
     }
     h2 {
       margin-top: 0;
@@ -112,6 +113,16 @@
       margin-bottom: 12px;
       font-weight: 500;
     }
+    .email-warning-note {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      font-size: 0.78rem;
+      color: #92400e;
+      line-height: 1.35;
+    }
     .upload-group { margin-top: 16px; }
     .upload-group label {
       display: block;
@@ -165,9 +176,9 @@
     }
     .status {
       text-align: center;
-      font-weight: 700;
+      font-weight: 600;
       margin-top: 14px;
-      font-size: 1.15rem;
+      font-size: 0.95rem;
     }
     .otp-panel {
       display: none;
@@ -179,10 +190,10 @@
       text-align: center;
     }
     .otp-timer {
-      font-size: 0.85rem;
+      font-size: 0.92rem;
       color: #1e40af;
-      font-weight: 600;
-      margin-bottom: 10px;
+      font-weight: 700;
+      margin-bottom: 12px;
     }
     .otp-inputs {
       display: flex;
@@ -195,6 +206,26 @@
       font-size: 0.85rem;
       width: auto;
       white-space: nowrap;
+    }
+
+    /* Modal dialog for email double-check */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .modal-content {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 22px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>
@@ -220,11 +251,15 @@
 
       <label style="font-weight: 600; font-size: 0.88rem; color: #334155; display:block; margin-bottom: 4px;">Enter Active Gmail Address:</label>
       <input type="email" id="emailInput" placeholder="yourname@gmail.com" autocomplete="off">
+      
+      <div class="email-warning-note">
+        ⚠️ <b>Please carefully verify your email ID:</b> The verification OTP will be sent to this exact address. If typed incorrectly, you will not receive the code.
+      </div>
 
       <p style="font-weight: 600; color: #0f172a; margin-bottom: 6px;">Are these details correct?</p>
       <div class="btn-row">
         <button class="danger" onclick="exitPortal()">No (Exit)</button>
-        <button class="success" onclick="proceedToUpload()">Yes (Proceed)</button>
+        <button class="success" onclick="openEmailConfirmModal()">Yes (Proceed)</button>
       </div>
     </div>
   </div>
@@ -252,4 +287,400 @@
       <input type="file" id="signInput" accept="image/*" onchange="handleImageSelection(event, 'sign')">
       <div id="signBox" class="preview-box">
         <img id="signPreview">
-        <div id="signSizeTag" class
+        <div id="signSizeTag" class="file-size-tag"></div>
+      </div>
+    </div>
+
+    <!-- Merged Card Live Preview -->
+    <div id="combinedBox" class="combined-card-box">
+      <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Passport Size Card (3.5 &times; 4.5 cm Ratio)</span>
+      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Enclosed outer border with integrated signature (31–34 KB)</div>
+      <img id="combinedPreview">
+      <div id="combinedSizeTag" class="file-size-tag"></div>
+    </div>
+
+    <button id="sendOtpBtn" style="margin-top: 22px;" onclick="requestOtp()">Send OTP & Proceed</button>
+
+    <!-- OTP Input Section -->
+    <div id="otpPanel" class="otp-panel">
+      <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">Enter 6-Digit OTP</div>
+      <div id="otpDestinationLabel" style="font-size: 0.8rem; color: #475569; margin-bottom: 8px;"></div>
+      
+      <!-- Unified Single 180s Countdown -->
+      <div id="timerDisplay" class="otp-timer">OTP Expires in: 03:00</div>
+
+      <div class="otp-inputs">
+        <input type="text" id="otpCodeInput" maxlength="6" placeholder="123456" style="margin-bottom:0; text-align:center; letter-spacing: 4px; font-weight:bold; font-size:1.1rem;">
+        <button id="resendBtn" class="resend-btn" onclick="requestOtp()" disabled>Resend (180s)</button>
+      </div>
+
+      <button id="finalVerifyBtn" style="margin-top: 12px; background: #16a34a;" onclick="verifyAndUpload()">Verify OTP & Upload</button>
+    </div>
+
+    <div id="statusMessage" class="status"></div>
+  </div>
+</div>
+
+<!-- Email Confirmation Modal Dialog -->
+<div id="confirmEmailModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3 style="margin-top: 0; margin-bottom: 8px; color: #0f172a; font-size: 1.1rem;">Confirm Email ID</h3>
+    <p style="font-size: 0.85rem; color: #475569; margin-bottom: 12px;">Please carefully verify your email ID. The verification OTP will be sent to this exact address:</p>
+    <div id="modalEmailDisplay" style="font-weight: 700; font-size: 1rem; color: #1e40af; background: #eff6ff; padding: 10px; border-radius: 6px; text-align: center; word-break: break-all; margin-bottom: 14px;"></div>
+    <div style="font-size: 0.78rem; color: #b45309; background: #fffbeb; padding: 8px; border-radius: 6px; margin-bottom: 16px;">
+      If typed incorrectly, you will not receive the code.
+    </div>
+    <div class="btn-row" style="margin-top: 0;">
+      <button style="background: #64748b;" onclick="closeEmailConfirmModal()">Edit Email</button>
+      <button class="success" onclick="confirmAndProceed()">Confirm & Proceed</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Insert your deployed Apps Script Web App URL below
+  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuJGRhvR0ntrVBpBnn4RYD4GfsSuxhKwp3C3Hz0Jx0oXFVIfeCW9Mu8h0i5r2LUk8I/exec";
+
+  var currentStudent = null;
+  var studentEmail = "";
+  var photoRawImg = null;
+  var signRawImg = null;
+  var compressedPhotoBase64 = null;
+  var compressedSignBase64 = null;
+  var combinedBase64 = null;
+
+  var otpCountdownInterval = null;
+
+  async function verifyRegdNo() {
+    var val = document.getElementById("regdNoInput").value.trim().toUpperCase();
+    var errBox = document.getElementById("lookupError");
+    var detailsBox = document.getElementById("detailsBox");
+    var btn = document.getElementById("searchBtn");
+
+    errBox.style.display = "none";
+    detailsBox.style.display = "none";
+
+    if (!val) {
+      errBox.innerText = "Please enter your Regd No.";
+      errBox.style.display = "block";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Verifying...";
+
+    try {
+      var res = await fetch(SCRIPT_URL + "?action=lookup&regdNo=" + encodeURIComponent(val));
+      var data = await res.json();
+
+      if (data.status === "found") {
+        currentStudent = data;
+        document.getElementById("lblRegd").innerText = data.regdNo;
+        document.getElementById("lblName").innerText = data.name;
+        document.getElementById("lblSection").innerText = data.section;
+        detailsBox.style.display = "block";
+      } else {
+        errBox.innerText = "No details found. Please enter the correct Regd No.";
+        errBox.style.display = "block";
+      }
+    } catch (e) {
+      errBox.innerText = "Verification failed. Check your network connection.";
+      errBox.style.display = "block";
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "Verify Regd No.";
+    }
+  }
+
+  function exitPortal() {
+    currentStudent = null;
+    document.getElementById("detailsBox").style.display = "none";
+    document.getElementById("regdNoInput").value = "";
+    document.getElementById("emailInput").value = "";
+    document.getElementById("lookupError").style.display = "none";
+  }
+
+  function openEmailConfirmModal() {
+    var email = document.getElementById("emailInput").value.trim();
+    if (!email || !email.includes("@") || !email.includes(".")) {
+      alert("Please enter a valid Gmail / Email address.");
+      return;
+    }
+    document.getElementById("modalEmailDisplay").innerText = email;
+    document.getElementById("confirmEmailModal").style.display = "flex";
+  }
+
+  function closeEmailConfirmModal() {
+    document.getElementById("confirmEmailModal").style.display = "none";
+  }
+
+  function confirmAndProceed() {
+    studentEmail = document.getElementById("emailInput").value.trim();
+    closeEmailConfirmModal();
+    document.getElementById("step1").classList.remove("active");
+    document.getElementById("step2").classList.add("active");
+  }
+
+  function getExactByteSize(dataUrl) {
+    var base64 = dataUrl.indexOf(",") > -1 ? dataUrl.split(",")[1] : dataUrl;
+    try {
+      return atob(base64).length;
+    } catch(e) {
+      return Math.round(base64.length * 3 / 4);
+    }
+  }
+
+  function getKbSize(dataUrl) {
+    return (getExactByteSize(dataUrl) / 1024).toFixed(1);
+  }
+
+  function compressProportional(img, maxDim, quality) {
+    var canvas = document.createElement("canvas");
+    var scale = Math.min(maxDim / Math.max(img.width, img.height), 1);
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    return canvas.toDataURL("image/jpeg", quality);
+  }
+
+  function handleImageSelection(event, type) {
+    var file = event.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        if (type === "photo") {
+          photoRawImg = img;
+          compressedPhotoBase64 = compressProportional(img, 500, 0.74);
+          document.getElementById("photoPreview").src = compressedPhotoBase64;
+          document.getElementById("photoSizeTag").innerText = "Photo Ready • " + getKbSize(compressedPhotoBase64) + " KB";
+          document.getElementById("photoBox").style.display = "block";
+        } else {
+          signRawImg = img;
+          compressedSignBase64 = compressProportional(img, 450, 0.70);
+          document.getElementById("signPreview").src = compressedSignBase64;
+          document.getElementById("signSizeTag").innerText = "Signature Ready • " + getKbSize(compressedSignBase64) + " KB";
+          document.getElementById("signBox").style.display = "block";
+        }
+
+        if (photoRawImg && signRawImg) {
+          generateCombinedPassportCard();
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function generateCombinedPassportCard() {
+    var totalW = 410;
+    var totalH = 527;
+    var photoH = 415;
+    var signH = 112;
+
+    var canvas = document.createElement("canvas");
+    canvas.width = totalW;
+    canvas.height = totalH;
+    var ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, totalW, totalH);
+
+    var pScale = Math.max(totalW / photoRawImg.width, photoH / photoRawImg.height);
+    var drawW = photoRawImg.width * pScale;
+    var drawH = photoRawImg.height * pScale;
+    var drawX = (totalW - drawW) / 2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, totalW, photoH);
+    ctx.clip();
+    ctx.drawImage(photoRawImg, drawX, 0, drawW, drawH);
+    ctx.restore();
+
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, photoH);
+    ctx.lineTo(totalW, photoH);
+    ctx.stroke();
+
+    var maxSignW = totalW - 40;
+    var maxSignH = signH - 18;
+    var sScale = Math.min(maxSignW / signRawImg.width, maxSignH / signRawImg.height);
+    var sW = signRawImg.width * sScale;
+    var sH = signRawImg.height * sScale;
+    var sX = (totalW - sW) / 2;
+    var sY = photoH + (signH - sH) / 2;
+
+    ctx.drawImage(signRawImg, sX, sY, sW, sH);
+
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
+
+    var MAX_BYTES = 34816; // 34.0 KB ceiling
+    var MIN_BYTES = 31744; // 31.0 KB floor
+
+    var quality = 0.88;
+    combinedBase64 = canvas.toDataURL("image/jpeg", quality);
+    var currentBytes = getExactByteSize(combinedBase64);
+
+    while (currentBytes > MAX_BYTES && quality > 0.40) {
+      quality -= 0.01;
+      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
+      currentBytes = getExactByteSize(combinedBase64);
+    }
+
+    while (currentBytes < MIN_BYTES && quality < 0.96) {
+      var nextUrl = canvas.toDataURL("image/jpeg", quality + 0.01);
+      var nextBytes = getExactByteSize(nextUrl);
+      if (nextBytes <= MAX_BYTES) {
+        quality += 0.01;
+        combinedBase64 = nextUrl;
+        currentBytes = nextBytes;
+      } else {
+        break;
+      }
+    }
+
+    var finalKb = (getExactByteSize(combinedBase64) / 1024).toFixed(1);
+    document.getElementById("combinedPreview").src = combinedBase64;
+    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + finalKb + " KB (Target: 31–34 KB)";
+    document.getElementById("combinedBox").style.display = "block";
+  }
+
+  // Request & Dispatch OTP
+  async function requestOtp() {
+    if (!compressedPhotoBase64 || !compressedSignBase64 || !combinedBase64) {
+      alert("Please upload both Photo and Signature before requesting OTP.");
+      return;
+    }
+
+    var btn = document.getElementById("sendOtpBtn");
+    var resendBtn = document.getElementById("resendBtn");
+    btn.disabled = true;
+    btn.innerText = "Sending OTP...";
+
+    try {
+      var url = SCRIPT_URL + "?action=sendOtp&email=" + encodeURIComponent(studentEmail) + "&regdNo=" + encodeURIComponent(currentStudent.regdNo);
+      var res = await fetch(url);
+      var data = await res.json();
+
+      if (data.status === "otp_sent") {
+        document.getElementById("sendOtpBtn").style.display = "none";
+        document.getElementById("otpPanel").style.display = "block";
+        document.getElementById("otpDestinationLabel").innerText = "Sent to: " + studentEmail;
+        startUnified180sTimer();
+      } else {
+        alert("Failed to send OTP: " + (data.message || "Unknown error"));
+        btn.disabled = false;
+        btn.innerText = "Send OTP & Proceed";
+      }
+    } catch(err) {
+      alert("Error sending OTP. Check internet connection.");
+      btn.disabled = false;
+      btn.innerText = "Send OTP & Proceed";
+    }
+  }
+
+  // Single unified 180 seconds countdown
+  function startUnified180sTimer() {
+    clearInterval(otpCountdownInterval);
+
+    var secondsLeft = 180;
+    var timerDisplay = document.getElementById("timerDisplay");
+    var resendBtn = document.getElementById("resendBtn");
+    
+    resendBtn.disabled = true;
+
+    otpCountdownInterval = setInterval(function() {
+      secondsLeft--;
+
+      var m = Math.floor(secondsLeft / 60);
+      var s = secondsLeft % 60;
+      var formattedTime = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+
+      timerDisplay.innerText = "OTP Expires in: " + formattedTime;
+      resendBtn.innerText = "Resend (" + secondsLeft + "s)";
+
+      if (secondsLeft <= 0) {
+        clearInterval(otpCountdownInterval);
+        timerDisplay.innerText = "OTP Expired! Click Resend to receive a new code.";
+        resendBtn.disabled = false;
+        resendBtn.innerText = "Resend OTP";
+      }
+    }, 1000);
+  }
+
+  // Final submission after OTP match
+  async function verifyAndUpload() {
+    var otpVal = document.getElementById("otpCodeInput").value.trim();
+    if (otpVal.length !== 6) {
+      alert("Please enter the 6-digit OTP code sent to your email.");
+      return;
+    }
+
+    var verifyBtn = document.getElementById("finalVerifyBtn");
+    var status = document.getElementById("statusMessage");
+
+    verifyBtn.disabled = true;
+    status.style.color = "#2563eb";
+    status.style.fontSize = "0.95rem";
+    status.innerText = "Verifying OTP & uploading...";
+
+    var payload = {
+      regdNo: currentStudent.regdNo,
+      email: studentEmail,
+      otp: otpVal,
+      photo: compressedPhotoBase64,
+      signature: compressedSignBase64,
+      combined: combinedBase64
+    };
+
+    try {
+      var res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+        redirect: "follow"
+      });
+
+      var data = await res.json();
+
+      if (data.status === "success") {
+        clearInterval(otpCountdownInterval);
+
+        // Hide all inputs, previews, and OTP panels
+        document.getElementById("step2Subtitle").style.display = "none";
+        document.querySelectorAll(".upload-group").forEach(function(el) { el.style.display = "none"; });
+        document.getElementById("combinedBox").style.display = "none";
+        document.getElementById("sendOtpBtn").style.display = "none";
+        document.getElementById("otpPanel").style.display = "none";
+
+        // Display only the final clean confirmation
+        status.style.color = "#16a34a";
+        status.style.fontSize = "1.2rem";
+        status.style.padding = "28px 10px";
+        status.innerHTML = "✓ Uploaded successfully";
+      } else {
+        alert(data.message || "Invalid OTP code.");
+        status.innerText = "";
+        verifyBtn.disabled = false;
+      }
+    } catch(err) {
+      status.style.color = "#dc2626";
+      status.innerText = "Upload failed: " + err.message;
+      verifyBtn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
