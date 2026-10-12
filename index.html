@@ -207,6 +207,8 @@
       width: auto;
       white-space: nowrap;
     }
+
+    /* Modal dialog */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -224,6 +226,31 @@
       max-width: 380px;
       width: 100%;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    .agreement-box {
+      margin-top: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #f8fafc;
+      padding: 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+    }
+    .agreement-box input[type="checkbox"] {
+      margin-top: 3px;
+      cursor: pointer;
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+    }
+    .agreement-box label {
+      font-size: 0.8rem;
+      color: #1e293b;
+      line-height: 1.4;
+      cursor: pointer;
+      user-select: none;
     }
   </style>
 </head>
@@ -318,18 +345,24 @@
   </div>
 </div>
 
-<!-- Email Confirmation Modal Dialog -->
+<!-- Email Confirmation Modal Dialog with Agreement Checkbox -->
 <div id="confirmEmailModal" class="modal-overlay">
   <div class="modal-content">
     <h3 style="margin-top: 0; margin-bottom: 8px; color: #0f172a; font-size: 1.1rem;">Confirm Email ID</h3>
-    <p style="font-size: 0.85rem; color: #475569; margin-bottom: 12px;">Please carefully verify your email ID. The verification OTP will be sent to this exact address:</p>
-    <div id="modalEmailDisplay" style="font-weight: 700; font-size: 1rem; color: #1e40af; background: #eff6ff; padding: 10px; border-radius: 6px; text-align: center; word-break: break-all; margin-bottom: 14px;"></div>
-    <div style="font-size: 0.78rem; color: #b45309; background: #fffbeb; padding: 8px; border-radius: 6px; margin-bottom: 16px;">
-      If typed incorrectly, you will not receive the code.
+    <p style="font-size: 0.85rem; color: #475569; margin-bottom: 10px;">Please verify your email address. The verification OTP will be sent to:</p>
+    
+    <div id="modalEmailDisplay" style="font-weight: 700; font-size: 0.95rem; color: #1e40af; background: #eff6ff; padding: 10px; border-radius: 6px; text-align: center; word-break: break-all; margin-bottom: 12px;"></div>
+
+    <div class="agreement-box">
+      <input type="checkbox" id="emailAgreeCheckbox" onchange="toggleConfirmButton()">
+      <label for="emailAgreeCheckbox">
+        I confirm that this email ID belongs to me and I am not utilising another person's email ID for this OTP purpose.
+      </label>
     </div>
+
     <div class="btn-row" style="margin-top: 0;">
       <button style="background: #64748b;" onclick="closeEmailConfirmModal()">Edit Email</button>
-      <button class="success" onclick="confirmAndProceed()">Confirm & Proceed</button>
+      <button id="confirmProceedBtn" class="success" onclick="confirmAndProceed()" disabled>Confirm & Proceed</button>
     </div>
   </div>
 </div>
@@ -411,8 +444,20 @@
       alert("Please enter a valid Gmail / Email address.");
       return;
     }
+
     document.getElementById("modalEmailDisplay").innerText = email;
+    
+    // Reset the checkbox and disable the proceed button whenever opening
+    var agreeCheckbox = document.getElementById("emailAgreeCheckbox");
+    agreeCheckbox.checked = false;
+    document.getElementById("confirmProceedBtn").disabled = true;
+
     document.getElementById("confirmEmailModal").style.display = "flex";
+  }
+
+  function toggleConfirmButton() {
+    var checked = document.getElementById("emailAgreeCheckbox").checked;
+    document.getElementById("confirmProceedBtn").disabled = !checked;
   }
 
   function closeEmailConfirmModal() {
