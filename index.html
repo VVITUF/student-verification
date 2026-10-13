@@ -632,7 +632,7 @@
         document.getElementById("otpDestinationLabel").innerText = "Sent to: " + studentEmail;
         startUnified180sTimer();
       } else {
-        alert("Failed to send OTP: " + (data ? data.message : "Unknown error"));
+        alert(data && data.message ? data.message : "Unable to send verification code. Please try again.");
         btn.disabled = false;
         btn.innerText = "Send OTP & Proceed";
       }
