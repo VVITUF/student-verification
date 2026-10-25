@@ -3,732 +3,529 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Verification & Upload</title>
+  <title>Student Details Form - VVIT</title>
   <style>
     * {
       box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    body {
       margin: 0;
-      padding: 16px;
-      background: #f1f5f9;
-      color: #0f172a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 24px;
-      width: 100%;
-      max-width: 440px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-      position: relative;
-    }
-    h2 {
-      margin-top: 0;
-      margin-bottom: 6px;
-      font-size: 1.25rem;
-      color: #0f172a;
-    }
-    p {
-      color: #64748b;
-      font-size: 0.9rem;
-      margin-top: 0;
-      margin-bottom: 16px;
-      line-height: 1.4;
-    }
-    .step {
-      display: none;
-    }
-    .step.active {
-      display: block;
-    }
-    input[type="text"], input[type="email"] {
-      width: 100%;
-      padding: 12px 14px;
-      font-size: 1rem;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      outline: none;
-    }
-    #regdNoInput { text-transform: uppercase; }
-    input:focus { border-color: #2563eb; }
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #ffffff;
-      background: #2563eb;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background: #94a3b8;
-      cursor: not-allowed;
-    }
-    .danger { background: #dc2626; }
-    .success { background: #16a34a; }
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-    }
-    .details-box {
-      display: none;
-      background: #f8fafc;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 14px;
-      margin-top: 14px;
-    }
-    .details-box table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 12px;
-    }
-    .details-box td {
-      padding: 6px 0;
-      font-size: 0.92rem;
-      vertical-align: top;
-    }
-    .details-box td:first-child {
-      font-weight: 600;
-      width: 35%;
-      color: #475569;
-    }
-    .error-box {
-      display: none;
-      color: #dc2626;
-      background: #fee2e2;
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      margin-bottom: 12px;
-      font-weight: 500;
-    }
-    .email-warning-note {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: 6px;
-      padding: 8px 10px;
-      margin-bottom: 12px;
-      font-size: 0.78rem;
-      color: #92400e;
-      line-height: 1.35;
-    }
-    .upload-group { margin-top: 16px; }
-    .upload-group label {
-      display: block;
-      font-weight: 600;
-      font-size: 0.9rem;
-      margin-bottom: 4px;
-      color: #334155;
-    }
-    .file-hint {
-      font-size: 0.78rem;
-      color: #64748b;
-      margin-bottom: 6px;
-    }
-    input[type="file"] { width: 100%; font-size: 0.9rem; }
-    .preview-box {
-      display: none;
-      margin-top: 8px;
-      text-align: center;
-      background: #f8fafc;
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
-    }
-    .preview-box img {
-      max-height: 150px;
-      max-width: 100%;
-      object-fit: contain;
-      border-radius: 4px;
-    }
-    .file-size-tag {
-      font-size: 0.75rem;
-      color: #16a34a;
-      font-weight: 600;
-      margin-top: 4px;
-    }
-    .combined-card-box {
-      display: none;
-      margin-top: 18px;
-      padding: 14px;
-      background: #f8fafc;
-      border: 1.5px dashed #94a3b8;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .combined-card-box img {
-      display: block;
-      margin: 10px auto 0 auto;
-      max-width: 180px;
-      border-radius: 4px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .status {
-      text-align: center;
-      font-weight: 600;
-      margin-top: 14px;
-      font-size: 0.95rem;
-    }
-    .otp-panel {
-      display: none;
-      margin-top: 18px;
-      padding: 16px;
-      background: #eff6ff;
-      border: 1.5px solid #bfdbfe;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .otp-timer {
-      font-size: 0.92rem;
-      color: #1e40af;
-      font-weight: 700;
-      margin-bottom: 12px;
-    }
-    .otp-inputs {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .resend-btn {
-      background: #64748b;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      width: auto;
-      white-space: nowrap;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
-    /* Modal dialog */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(15, 23, 42, 0.6);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
+    body {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      padding: 30px 16px;
     }
-    .modal-content {
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
       background: #ffffff;
       border-radius: 12px;
-      padding: 22px;
-      max-width: 380px;
-      width: 100%;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 32px 40px;
     }
-    .agreement-box {
-      margin-top: 12px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      background: #f8fafc;
-      padding: 10px;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
+
+    /* Clean, Professional University Header */
+    .form-header {
+      text-align: center;
+      border-bottom: 2px solid #1e3a8a;
+      padding-bottom: 16px;
+      margin-bottom: 28px;
     }
-    .agreement-box input[type="checkbox"] {
-      margin-top: 3px;
-      cursor: pointer;
-      width: 17px;
-      height: 17px;
-      flex-shrink: 0;
-    }
-    .agreement-box label {
-      font-size: 0.8rem;
-      color: #1e293b;
+
+    .form-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e3a8a;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
       line-height: 1.4;
+    }
+
+    .form-header h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 6px;
+    }
+
+    /* Verification Card */
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full-col {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .req {
+      color: #ef4444;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      outline: none;
+      background-color: #fff;
+      color: #0f172a;
+      transition: all 0.2s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #1e3a8a;
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+    }
+
+    .form-group input::placeholder {
+      color: #94a3b8;
+      font-size: 0.82rem;
+    }
+
+    .input-readonly {
+      background-color: #f8fafc !important;
+      color: #64748b !important;
+      cursor: not-allowed;
+    }
+
+    /* Button Styles */
+    .btn-primary {
+      background-color: #1e3a8a;
+      color: #ffffff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
       cursor: pointer;
-      user-select: none;
+      display: inline-block;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #1e40af;
+    }
+
+    .btn-primary:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .btn-success {
+      background-color: #059669;
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .btn-secondary {
+      background-color: #64748b;
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .form-actions {
+      text-align: center;
+      margin-top: 24px;
+    }
+
+    /* Alert / Notice Messages */
+    .alert-box {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .alert-box.error {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .alert-box.success {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    /* Form Sections */
+    .form-section {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 22px;
+    }
+
+    .form-section legend {
+      font-weight: 600;
+      color: #1e3a8a;
+      padding: 0 8px;
+      font-size: 1rem;
+    }
+
+    .section-subtext {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    /* Centered Upload Containers */
+    .upload-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 650px) {
+      .upload-container {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 20px 16px;
+      }
+    }
+
+    .upload-card {
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 18px;
+      text-align: center;
+      background-color: #f8fafc;
+    }
+
+    .upload-card h4 {
+      font-size: 0.85rem;
+      color: #334155;
+      margin-bottom: 12px;
+    }
+
+    .upload-dropzone {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+
+    .upload-dropzone input[type="file"] {
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    .thumb-preview {
+      max-width: 110px;
+      max-height: 130px;
+      margin: 10px auto 4px auto;
+      display: block;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .combined-preview {
+      width: 130px;
+      border: 1.5px solid #1e3a8a;
+      border-radius: 4px;
+    }
+
+    .size-tag {
+      font-size: 0.78rem;
+      color: #059669;
+      font-weight: 500;
+    }
+
+    /* A4 Preview Styles */
+    .a4-preview-wrapper {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 24px;
+      font-size: 0.85rem;
+    }
+
+    .preview-header {
+      text-align: center;
+      border-bottom: 2px solid #1e3a8a;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .preview-header h3 {
+      font-size: 1.05rem;
+      color: #1e3a8a;
+    }
+
+    .preview-header h4 {
+      font-size: 0.85rem;
+      color: #334155;
+    }
+
+    .preview-top-grid {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+    }
+
+    .preview-table th, .preview-table td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      font-size: 0.8rem;
+    }
+
+    .preview-table th {
+      background-color: #f8fafc;
+      color: #1e293b;
+      width: 22%;
+      text-align: left;
+    }
+
+    .preview-photo-box {
+      width: 130px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .preview-photo-box img {
+      width: 125px;
+      height: 165px;
+      border: 1.5px solid #1e3a8a;
+      object-fit: cover;
+    }
+
+    .preview-declaration {
+      font-size: 0.75rem;
+      font-style: italic;
+      color: #64748b;
+      margin-top: 10px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .form-header, .screen-notice, #postSubmitActions {
+        display: none !important;
+      }
+      .a4-preview-wrapper {
+        border: none;
+        padding: 0;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <header class="form-header">
+      <h2>Vasireddy Venkatadri International Technological University</h2>
+      <h3>Student Details Form</h3>
+    </header>
 
-<div class="card">
-  <!-- Step 1: Verification -->
-  <div id="step1" class="step active">
-    <h2>Student Verification</h2>
-    <p>Enter your Registration Number to verify details.</p>
+    <!-- ================= STAGE 1: VERIFICATION CARD ================= -->
+    <div id="authCard" class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="authRegdNo">Regd. Number <span class="req">*</span></label>
+          <input type="text" id="authRegdNo" 
+                 placeholder="Enter your 14 digit Regd No." 
+                 maxlength="14" required>
+        </div>
 
-    <div id="lookupError" class="error-box">No details found. Please enter the correct Regd No.</div>
+        <div class="form-group">
+          <label for="authAdmNo">Admission Number <span class="req">*</span></label>
+          <input type="text" id="authAdmNo" 
+                 placeholder="Enter your 10 digit Admission No. It starts with letters VCO/VON/VOF" 
+                 maxlength="10" required>
+        </div>
 
-    <input type="text" id="regdNoInput" placeholder="e.g. 2026DCEBT10001" autocomplete="off">
-    <button id="searchBtn" onclick="verifyRegdNo()">Verify Regd No.</button>
+        <div class="form-group">
+          <label for="authSection">Section <span class="req">*</span></label>
+          <select id="authSection" required>
+            <option value="">Select Section</option>
+            <option value="CIV-1">CIV-1</option>
+            <option value="CIV-2">CIV-2</option>
+            <option value="CSE-1">CSE-1</option>
+            <option value="CSE-2">CSE-2</option>
+            <option value="ECE-1">ECE-1</option>
+            <option value="ECE-2">ECE-2</option>
+          </select>
+        </div>
+      </div>
 
-    <div id="detailsBox" class="details-box">
-      <table>
-        <tr><td>Regd No.:</td><td id="lblRegd"></td></tr>
-        <tr><td>Name:</td><td id="lblName"></td></tr>
-        <tr><td>Section:</td><td id="lblSection"></td></tr>
-      </table>
+      <div id="authAlert" class="alert-box error" style="display: none;"></div>
 
-      <label style="font-weight: 600; font-size: 0.88rem; color: #334155; display:block; margin-bottom: 4px;">Enter Active Gmail Address:</label>
-      <input type="email" id="emailInput" placeholder="yourname@gmail.com" autocomplete="off">
+      <div class="form-actions">
+        <button type="button" id="authBtn" class="btn-primary" onclick="handleAuthVerification()">Verify & Proceed</button>
+      </div>
+    </div>
+
+    <!-- ================= STAGE 2: MAIN REGISTRATION FORM ================= -->
+    <div id="formCard" class="card" style="display: none;">
       
-      <div class="email-warning-note">
-        ⚠️ <b>Please carefully verify your email ID:</b> The verification OTP will be sent to this exact address from <b>dr_csb@thinkers.co.in</b>. If typed incorrectly, you will not receive the code.
+      <div id="welcomeBanner" class="alert-box success" style="display: none; margin-bottom: 20px;">
+        <span id="welcomeNameText" style="font-weight: 600;"></span>
       </div>
 
-      <p style="font-weight: 600; color: #0f172a; margin-bottom: 6px;">Are these details correct?</p>
-      <div class="btn-row">
-        <button class="danger" onclick="exitPortal()">No (Exit)</button>
-        <button class="success" onclick="openEmailConfirmModal()">Yes (Proceed)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Step 2: Upload Files & OTP Submission -->
-  <div id="step2" class="step">
-    <h2>Upload Files</h2>
-    <p id="step2Subtitle">Upload photo & signature. Submission requires email OTP verification.</p>
-
-    <!-- Photo Input -->
-    <div class="upload-group">
-      <label>1. Passport Size Photo:</label>
-      <div class="file-hint">Original aspect preserved (&le; 35 KB)</div>
-      <input type="file" id="photoInput" accept="image/*" onchange="handleImageSelection(event, 'photo')">
-      <div id="photoBox" class="preview-box">
-        <img id="photoPreview">
-        <div id="photoSizeTag" class="file-size-tag"></div>
-      </div>
-    </div>
-
-    <!-- Signature Input -->
-    <div class="upload-group">
-      <label>2. Signature:</label>
-      <div class="file-hint">White background strip (&le; 15 KB)</div>
-      <input type="file" id="signInput" accept="image/*" onchange="handleImageSelection(event, 'sign')">
-      <div id="signBox" class="preview-box">
-        <img id="signPreview">
-        <div id="signSizeTag" class="file-size-tag"></div>
-      </div>
-    </div>
-
-    <!-- Merged Card Live Preview -->
-    <div id="combinedBox" class="combined-card-box">
-      <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Passport Size Card (3.5 &times; 4.5 cm Ratio)</span>
-      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Enclosed outer border with integrated signature (31–34 KB)</div>
-      <img id="combinedPreview">
-      <div id="combinedSizeTag" class="file-size-tag"></div>
-    </div>
-
-    <button id="sendOtpBtn" style="margin-top: 22px;" onclick="requestOtp()">Send OTP & Proceed</button>
-
-    <!-- OTP Input Section -->
-    <div id="otpPanel" class="otp-panel">
-      <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">Enter 6-Digit OTP</div>
-      <div id="otpDestinationLabel" style="font-size: 0.8rem; color: #475569; margin-bottom: 8px;"></div>
-      
-      <div id="timerDisplay" class="otp-timer">OTP Expires in: 03:00</div>
-
-      <div class="otp-inputs">
-        <input type="text" id="otpCodeInput" maxlength="6" placeholder="123456" style="margin-bottom:0; text-align:center; letter-spacing: 4px; font-weight:bold; font-size:1.1rem;">
-        <button id="resendBtn" class="resend-btn" onclick="requestOtp()" disabled>Resend (180s)</button>
-      </div>
-
-      <button id="finalVerifyBtn" style="margin-top: 12px; background: #16a34a;" onclick="verifyAndUpload()">Verify OTP & Upload</button>
-    </div>
-
-    <div id="statusMessage" class="status"></div>
-  </div>
-</div>
-
-<!-- Email Confirmation Modal Dialog with Agreement Checkbox -->
-<div id="confirmEmailModal" class="modal-overlay">
-  <div class="modal-content">
-    <h3 style="margin-top: 0; margin-bottom: 8px; color: #0f172a; font-size: 1.1rem;">Confirm Email ID</h3>
-    <p style="font-size: 0.85rem; color: #475569; margin-bottom: 10px;">Please verify your email address. The verification OTP will be sent to:</p>
-    
-    <div id="modalEmailDisplay" style="font-weight: 700; font-size: 0.95rem; color: #1e40af; background: #eff6ff; padding: 10px; border-radius: 6px; text-align: center; word-break: break-all; margin-bottom: 12px;"></div>
-
-    <div class="agreement-box">
-      <input type="checkbox" id="emailAgreeCheckbox" onchange="toggleConfirmButton()">
-      <label for="emailAgreeCheckbox">
-        I confirm that this email ID belongs to me and I am not utilising another person's email ID for this OTP purpose.
-      </label>
-    </div>
-
-    <div class="btn-row" style="margin-top: 0;">
-      <button style="background: #64748b;" onclick="closeEmailConfirmModal()">Edit Email</button>
-      <button id="confirmProceedBtn" class="success" onclick="confirmAndProceed()" disabled>Confirm & Proceed</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxIRPD8RxCShm_5V_x7atcMheqfx0_6WC_rAEa4h25D6uhnOhQAHA9vRi5jUOmvxU_T/exec";
-
-  var currentStudent = null;
-  var studentEmail = "";
-  var photoRawImg = null;
-  var signRawImg = null;
-  var compressedPhotoBase64 = null;
-  var compressedSignBase64 = null;
-  var combinedBase64 = null;
-
-  var otpCountdownInterval = null;
-
-  async function verifyRegdNo() {
-    var regdInput = document.getElementById("regdNoInput");
-    var val = regdInput ? regdInput.value.trim().toUpperCase() : "";
-    var errBox = document.getElementById("lookupError");
-    var detailsBox = document.getElementById("detailsBox");
-    var btn = document.getElementById("searchBtn");
-
-    if (errBox) errBox.style.display = "none";
-    if (detailsBox) detailsBox.style.display = "none";
-
-    if (!val) {
-      if (errBox) {
-        errBox.innerText = "Please enter your Regd No.";
-        errBox.style.display = "block";
-      }
-      return;
-    }
-
-    btn.disabled = true;
-    btn.innerText = "Verifying...";
-
-    try {
-      var targetUrl = SCRIPT_URL + "?action=lookup&regdNo=" + encodeURIComponent(val);
-      var res = await fetch(targetUrl, {
-        method: "GET",
-        mode: "cors",
-        redirect: "follow"
-      });
-
-      var data = await res.json();
-
-      if (data && data.status === "found") {
-        currentStudent = data;
-        document.getElementById("lblRegd").innerText = data.regdNo;
-        document.getElementById("lblName").innerText = data.name;
-        document.getElementById("lblSection").innerText = data.section;
-        detailsBox.style.display = "block";
-      } else {
-        errBox.innerText = "No details found for " + val + ". Please enter the correct Regd No.";
-        errBox.style.display = "block";
-      }
-    } catch (e) {
-      errBox.innerText = "Verification failed: Check your internet connection.";
-      errBox.style.display = "block";
-    } finally {
-      btn.disabled = false;
-      btn.innerText = "Verify Regd No.";
-    }
-  }
-
-  function exitPortal() {
-    currentStudent = null;
-    document.getElementById("detailsBox").style.display = "none";
-    document.getElementById("regdNoInput").value = "";
-    document.getElementById("emailInput").value = "";
-    document.getElementById("lookupError").style.display = "none";
-  }
-
-  function openEmailConfirmModal() {
-    var email = document.getElementById("emailInput").value.trim();
-    if (!email || !email.includes("@") || !email.includes(".")) {
-      alert("Please enter a valid Gmail / Email address.");
-      return;
-    }
-
-    document.getElementById("modalEmailDisplay").innerText = email;
-    
-    var agreeCheckbox = document.getElementById("emailAgreeCheckbox");
-    agreeCheckbox.checked = false;
-    document.getElementById("confirmProceedBtn").disabled = true;
-
-    document.getElementById("confirmEmailModal").style.display = "flex";
-  }
-
-  function toggleConfirmButton() {
-    var checked = document.getElementById("emailAgreeCheckbox").checked;
-    document.getElementById("confirmProceedBtn").disabled = !checked;
-  }
-
-  function closeEmailConfirmModal() {
-    document.getElementById("confirmEmailModal").style.display = "none";
-  }
-
-  function confirmAndProceed() {
-    studentEmail = document.getElementById("emailInput").value.trim();
-    closeEmailConfirmModal();
-    document.getElementById("step1").classList.remove("active");
-    document.getElementById("step2").classList.add("active");
-  }
-
-  function getExactByteSize(dataUrl) {
-    var base64 = dataUrl.indexOf(",") > -1 ? dataUrl.split(",")[1] : dataUrl;
-    try {
-      return atob(base64).length;
-    } catch(e) {
-      return Math.round(base64.length * 3 / 4);
-    }
-  }
-
-  function getKbSize(dataUrl) {
-    return (getExactByteSize(dataUrl) / 1024).toFixed(1);
-  }
-
-  function compressProportional(img, maxDim, quality) {
-    var canvas = document.createElement("canvas");
-    var scale = Math.min(maxDim / Math.max(img.width, img.height), 1);
-    canvas.width = Math.round(img.width * scale);
-    canvas.height = Math.round(img.height * scale);
-
-    var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    return canvas.toDataURL("image/jpeg", quality);
-  }
-
-  function handleImageSelection(event, type) {
-    var file = event.target.files[0];
-    if (!file) return;
-
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        if (type === "photo") {
-          photoRawImg = img;
-          compressedPhotoBase64 = compressProportional(img, 500, 0.74);
-          document.getElementById("photoPreview").src = compressedPhotoBase64;
-          document.getElementById("photoSizeTag").innerText = "Photo Ready • " + getKbSize(compressedPhotoBase64) + " KB";
-          document.getElementById("photoBox").style.display = "block";
-        } else {
-          signRawImg = img;
-          compressedSignBase64 = compressProportional(img, 450, 0.70);
-          document.getElementById("signPreview").src = compressedSignBase64;
-          document.getElementById("signSizeTag").innerText = "Signature Ready • " + getKbSize(compressedSignBase64) + " KB";
-          document.getElementById("signBox").style.display = "block";
-        }
-
-        if (photoRawImg && signRawImg) {
-          generateCombinedPassportCard();
-        }
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function generateCombinedPassportCard() {
-    var totalW = 410;
-    var totalH = 527;
-    var photoH = 415;
-    var signH = 112;
-
-    var canvas = document.createElement("canvas");
-    canvas.width = totalW;
-    canvas.height = totalH;
-    var ctx = canvas.getContext("2d");
-
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, totalW, totalH);
-
-    var pScale = Math.max(totalW / photoRawImg.width, photoH / photoRawImg.height);
-    var drawW = photoRawImg.width * pScale;
-    var drawH = photoRawImg.height * pScale;
-    var drawX = (totalW - drawW) / 2;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, totalW, photoH);
-    ctx.clip();
-    ctx.drawImage(photoRawImg, drawX, 0, drawW, drawH);
-    ctx.restore();
-
-    ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, photoH);
-    ctx.lineTo(totalW, photoH);
-    ctx.stroke();
-
-    var maxSignW = totalW - 40;
-    var maxSignH = signH - 18;
-    var sScale = Math.min(maxSignW / signRawImg.width, maxSignH / signRawImg.height);
-    var sW = signRawImg.width * sScale;
-    var sH = signRawImg.height * sScale;
-    var sX = (totalW - sW) / 2;
-    var sY = photoH + (signH - sH) / 2;
-
-    ctx.drawImage(signRawImg, sX, sY, sW, sH);
-
-    ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 2.5;
-    ctx.strokeRect(1, 1, totalW - 2, totalH - 2);
-
-    var MAX_BYTES = 34816;
-    var MIN_BYTES = 31744;
-
-    var quality = 0.88;
-    combinedBase64 = canvas.toDataURL("image/jpeg", quality);
-    var currentBytes = getExactByteSize(combinedBase64);
-
-    while (currentBytes > MAX_BYTES && quality > 0.40) {
-      quality -= 0.01;
-      combinedBase64 = canvas.toDataURL("image/jpeg", quality);
-      currentBytes = getExactByteSize(combinedBase64);
-    }
-
-    while (currentBytes < MIN_BYTES && quality < 0.96) {
-      var nextUrl = canvas.toDataURL("image/jpeg", quality + 0.01);
-      var nextBytes = getExactByteSize(nextUrl);
-      if (nextBytes <= MAX_BYTES) {
-        quality += 0.01;
-        combinedBase64 = nextUrl;
-        currentBytes = nextBytes;
-      } else {
-        break;
-      }
-    }
-
-    var finalKb = (getExactByteSize(combinedBase64) / 1024).toFixed(1);
-    document.getElementById("combinedPreview").src = combinedBase64;
-    document.getElementById("combinedSizeTag").innerText = "Passport-Size Card: " + finalKb + " KB (Target: 31–34 KB)";
-    document.getElementById("combinedBox").style.display = "block";
-  }
-
-  async function requestOtp() {
-    if (!compressedPhotoBase64 || !compressedSignBase64 || !combinedBase64) {
-      alert("Please upload both Photo and Signature before requesting OTP.");
-      return;
-    }
-
-    var btn = document.getElementById("sendOtpBtn");
-    var resendBtn = document.getElementById("resendBtn");
-    btn.disabled = true;
-    btn.innerText = "Sending OTP...";
-
-    try {
-      var url = SCRIPT_URL + "?action=sendOtp&email=" + encodeURIComponent(studentEmail) + "&regdNo=" + encodeURIComponent(currentStudent.regdNo);
-      var res = await fetch(url, {
-        method: "GET",
-        mode: "cors",
-        redirect: "follow"
-      });
-      var data = await res.json();
-
-      if (data && data.status === "otp_sent") {
-        document.getElementById("sendOtpBtn").style.display = "none";
-        document.getElementById("otpPanel").style.display = "block";
-        document.getElementById("otpDestinationLabel").innerText = "Sent to: " + studentEmail;
-        startUnified180sTimer();
-      } else {
-        alert(data && data.message ? data.message : "Unable to send verification code. Please try again.");
-        btn.disabled = false;
-        btn.innerText = "Send OTP & Proceed";
-      }
-    } catch(err) {
-      alert("Error sending OTP. Check internet connection.");
-      btn.disabled = false;
-      btn.innerText = "Send OTP & Proceed";
-    }
-  }
-
-  function startUnified180sTimer() {
-    clearInterval(otpCountdownInterval);
-
-    var secondsLeft = 180;
-    var timerDisplay = document.getElementById("timerDisplay");
-    var resendBtn = document.getElementById("resendBtn");
-    
-    resendBtn.disabled = true;
-
-    otpCountdownInterval = setInterval(function() {
-      secondsLeft--;
-
-      var m = Math.floor(secondsLeft / 60);
-      var s = secondsLeft % 60;
-      var formattedTime = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
-
-      timerDisplay.innerText = "OTP Expires in: " + formattedTime;
-      resendBtn.innerText = "Resend (" + secondsLeft + "s)";
-
-      if (secondsLeft <= 0) {
-        clearInterval(otpCountdownInterval);
-        timerDisplay.innerText = "OTP Expired! Click Resend to receive a new code.";
-        resendBtn.disabled = false;
-        resendBtn.innerText = "Resend OTP";
-      }
-    }, 1000);
-  }
-
-  async function verifyAndUpload() {
-    var otpVal = document.getElementById("otpCodeInput").value.trim();
-    if (otpVal.length !== 6) {
-      alert("Please enter the 6-digit OTP code sent to your email.");
-      return;
-    }
-
-    var verifyBtn = document.getElementById("finalVerifyBtn");
-    var status = document.getElementById("statusMessage");
-
-    verifyBtn.disabled = true;
-    status.style.color = "#2563eb";
-    status.style.fontSize = "0.95rem";
-    status.innerText = "Verifying OTP & uploading...";
-
-    var payload = {
-      regdNo: currentStudent.regdNo,
-      email: studentEmail,
-      otp: otpVal,
-      photo: compressedPhotoBase64,
-      signature: compressedSignBase64,
-      combined: combinedBase64
-    };
-
-    try {
-      var res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
-        redirect: "follow"
-      });
-
-      var data = await res.json();
-
-      if (data && data.status === "success") {
-        clearInterval(otpCountdownInterval);
-
-        document.getElementById("step2Subtitle").style.display = "none";
-        document.querySelectorAll(".upload-group").forEach(function(el) { el.style.display = "none"; });
-        document.getElementById("combinedBox").style.display = "none";
-        document.getElementById("sendOtpBtn").style.display = "none";
-        document.getElementById("otpPanel").style.display = "none";
-
-        status.style.color = "#16a34a";
-        status.style.fontSize = "1.2rem";
-        status.style.padding = "28px 10px";
-        status.innerHTML = "✓ Uploaded successfully";
-      } else {
-        alert(data ? data.message : "Invalid OTP code.");
-        status.innerText = "";
-        verifyBtn.disabled = false;
-      }
-    } catch(err) {
-      status.style.color = "#dc2626";
-      status.innerText = "Upload failed: " + err.message;
-      verifyBtn.disabled = false;
-    }
-  }
-</script>
-</body>
-</html>
+      <form id="studentRegistrationForm" onsubmit="event.preventDefault(); generateAndShowA4Preview();">
+        
+        <!-- SECTION 1: ACADEMIC DETAILS -->
+        <fieldset class="form-section">
+          <legend>1. Academic Identification</legend>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="fieldEnrollmentNo">Regd. Number</label>
+              <input type="text" id="fieldEnrollmentNo" readonly class="input-readonly">
+            </div>
+
+            <div class="form-group">
+              <label for="fieldAdmissionNo">Admission Number</label>
+              <input type="text" id="fieldAdmissionNo" readonly class="input-readonly">
+            </div>
+
+            <div class="form-group">
+              <label for="fieldProgramme">Programme Admitted</label>
+              <input type="text" id="fieldProgramme" value="B.Tech" readonly class="input-readonly">
+            </div>
+
+            <div class="form-group">
+              <label for="fieldSection">Section</label>
+              <input type="text" id="fieldSection" readonly class="input-readonly">
+            </div>
+
+            <div class="form-group">
+              <label for="fieldAdmissionType">Admission Type <span class="req">*</span></label>
+              <select id="fieldAdmissionType" required>
+                <option value="Convenor (EAPCET)">Convenor (EAPCET)</option>
+                <option value="Management">Management</option>
+                <option value="NRI">NRI</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fieldRankHtNo">Rank / Hall Ticket No</label>
+              <input type="text" id="fieldRankHtNo" placeholder="Rank or HT No">
+            </div>
+
+            <div class="form-group">
+              <label for="fieldFeeReimb">Fee Reimbursement <span class="req">*</span></label>
+              <select id="fieldFeeReimb" required>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fieldApaarId">APAAR ID</label>
+              <input type="text" id="fieldApaarId" placeholder="12-digit APAAR ID">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- SECTION 2: PERSONAL INFORMATION -->
+        <fieldset class="form-section">
+          <legend>2. Personal Information</legend>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="fieldNameSsc">Full Name (as per SSC/CBSE/ICSE) <span class="req">*</span></label>
+              <input type="text" id="fieldNameSsc" required>
+            </div>
+
+            <div class="form-group">
+              <label for="fieldGender">Gender <span class="req">*</span></label>
+              <select id="fieldGender" required>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fieldDob">Date of Birth <span class="req">*</span></label>
+              <input type="date" id="fieldDob" required>
+            </div>
+
+            <div class="form-group">
+              <label for="fieldBloodGroup">Blood Group <span class="req">*</span></label>
+              <select id="fieldBloodGroup" required>
+                <option value="">Select Blood Group</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fieldCategory">Category <span class="req">*</span></label>
+              <select id="fieldCategory" required>
+                <option value="">Select Category</option>
+                <option value="OC">OC</option>
+                <option value="BC-A">BC-A</option>
+                <option value="BC-B">BC-B</option>
+                <option value="BC-C">BC-C</option>
+                <option value="BC-D">BC-D</option>
+                <option value="BC-E">BC-E</option>
+                <option value="SC">SC</option>
+                <option value="ST">ST</option>
+                <option value="EWS">EWS</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fieldCaste">Sub-Caste <span class="req">*</span></label>
+              <input type="text" id="fieldCaste" placeholder="e.g. Kapu, Reddy, Kamma, Mala, etc." required[cite: 13]>
+            </div>
+
+            <div class="form-group">
+              <label for="fieldStudentMobile">Student Mobile (10-digit) <span class="req">*</span></label>
+              <input type="tel" id="fieldStudentMobile" pattern="[0-9]{10}" maxlength="10" required>
+            </div>
+
+            <div class="form-group">
