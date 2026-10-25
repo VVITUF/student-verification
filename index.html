@@ -15,7 +15,7 @@
     body {
       background-color: #f1f5f9;
       color: #1e293b;
-      padding: 30px 16px;
+      padding: 24px 14px;
     }
 
     .container {
@@ -24,14 +24,14 @@
       background: #ffffff;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      padding: 32px 40px;
+      padding: 30px 36px;
     }
 
     .form-header {
       text-align: center;
       border-bottom: 2px solid #1e3a8a;
       padding-bottom: 16px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
 
     .form-header h2 {
@@ -928,7 +928,7 @@
 
   </div>
 
-  <!-- EMBEDDED JAVASCRIPT (NO SEPARATE APP.JS REQUIRED) -->
+  <!-- JAVASCRIPT LOGIC DIRECTLY INCLUDED -->
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIX5jqnxsYTwz3we0fwBvjkGHhdtQ5kkoaxISIO1tZj-AXW4JmIldF7o5xVUQVu4cs/exec";
 
@@ -1009,11 +1009,11 @@
     }
 
     async function handleAuthVerification() {
-      const regdEl = document.getElementById("authRegdNo") || document.getElementById("enrollmentNo") || document.getElementById("fieldEnrollmentNo");
-      const admEl  = document.getElementById("authAdmNo") || document.getElementById("admissionNo") || document.getElementById("fieldAdmissionNo");
-      const secEl  = document.getElementById("authSection") || document.getElementById("programmeSection") || document.getElementById("fieldSection");
+      const regdEl = document.getElementById("authRegdNo");
+      const admEl  = document.getElementById("authAdmNo");
+      const secEl  = document.getElementById("authSection");
       const alertEl = document.getElementById("authAlert");
-      const btn = document.getElementById("authBtn") || document.getElementById("btnVerify");
+      const btn = document.getElementById("authBtn");
 
       if (alertEl) alertEl.style.display = "none";
 
