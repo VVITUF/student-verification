@@ -27,7 +27,6 @@
       padding: 32px 40px;
     }
 
-    /* Clean, Professional University Header */
     .form-header {
       text-align: center;
       border-bottom: 2px solid #1e3a8a;
@@ -51,7 +50,6 @@
       margin-top: 6px;
     }
 
-    /* Verification Card */
     .card {
       background: #ffffff;
       border-radius: 8px;
@@ -113,7 +111,6 @@
       cursor: not-allowed;
     }
 
-    /* Button Styles */
     .btn-primary {
       background-color: #1e3a8a;
       color: #ffffff;
@@ -162,7 +159,6 @@
       margin-top: 24px;
     }
 
-    /* Alert / Notice Messages */
     .alert-box {
       margin-top: 14px;
       padding: 12px 16px;
@@ -182,7 +178,6 @@
       border: 1px solid #bbf7d0;
     }
 
-    /* Form Sections */
     .form-section {
       border: 1px solid #e2e8f0;
       border-radius: 8px;
@@ -203,7 +198,6 @@
       margin-bottom: 16px;
     }
 
-    /* Centered Upload Containers */
     .upload-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -266,7 +260,6 @@
       font-weight: 500;
     }
 
-    /* A4 Preview Styles */
     .a4-preview-wrapper {
       background: #ffffff;
       border: 1px solid #cbd5e1;
@@ -520,7 +513,7 @@
 
             <div class="form-group">
               <label for="fieldCaste">Sub-Caste <span class="req">*</span></label>
-              <input type="text" id="fieldCaste" placeholder="e.g. Kapu, Reddy, Kamma, Mala, etc." required[span_0](start_span)[span_0](end_span)>
+              <input type="text" id="fieldCaste" placeholder="e.g. Kapu, Reddy, Kamma, Mala, etc." required>
             </div>
 
             <div class="form-group">
@@ -741,200 +734,3 @@
           
           <div class="upload-container">
             <div class="upload-card">
-              <h4>Passport Photo (Colour) <span class="req">*</span></h4>
-              <div class="upload-dropzone">
-                <input type="file" id="photoUpload" accept="image/jpeg,image/png" onchange="processSelectedImage(event, 'photo')" required>
-              </div>
-              <img id="photoThumb" class="thumb-preview" alt="Photo Preview" style="display: none;">
-              <div id="photoSizeTag" class="size-tag"></div>
-            </div>
-
-            <div class="upload-card">
-              <h4>Signature (Black / Blue Ink) <span class="req">*</span></h4>
-              <div class="upload-dropzone">
-                <input type="file" id="signUpload" accept="image/jpeg,image/png" onchange="processSelectedImage(event, 'sign')" required>
-              </div>
-              <img id="signThumb" class="thumb-preview" alt="Signature Preview" style="display: none;">
-              <div id="signSizeTag" class="size-tag"></div>
-            </div>
-          </div>
-
-          <div style="margin-top: 14px; text-align: center;">
-            <img id="combinedThumb" class="combined-preview" alt="Synthesized Card" style="display: none; margin: 0 auto;">
-            <div id="combinedSizeTag" class="size-tag" style="margin-top: 6px;"></div>
-          </div>
-        </fieldset>
-
-        <div class="form-actions">
-          <button type="submit" class="btn-primary">Preview & Verify Application</button>
-        </div>
-
-      </form>
-    </div>
-
-    <!-- ================= STAGE 3: A4 PREVIEW CARD ================= -->
-    <div id="previewCard" class="card" style="display: none;">
-      <div class="preview-actions screen-notice" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-        <button type="button" class="btn-secondary" onclick="closePreviewToEdit()">← Back to Edit Form</button>
-        <button type="button" id="finalSubmitBtn" class="btn-success" onclick="submitApplicationToCloud()">Confirm & Submit Application</button>
-      </div>
-
-      <div id="submissionStatus" class="alert-box" style="display: none; margin-bottom: 16px;"></div>
-
-      <div id="postSubmitActions" style="display: none; margin-bottom: 16px; gap: 10px; justify-content: center;">
-        <button type="button" class="btn-primary" onclick="window.print()">Print Application Record</button>
-      </div>
-
-      <!-- Printable A4 Record -->
-      <div class="a4-preview-wrapper">
-        <div class="preview-header">
-          <h3>VASIREDDY VENKATADRI INTERNATIONAL TECHNOLOGICAL UNIVERSITY</h3>
-          <h4>STUDENT REGISTRATION & ENROLLMENT RECORD — 2026</h4>
-        </div>
-
-        <div class="preview-top-grid">
-          <table class="preview-table">
-            <tr>
-              <th>Regd. No:</th>
-              <td id="pEnrollmentNo"></td>
-              <th>Admission No:</th>
-              <td id="pAdmissionNo"></td>
-            </tr>
-            <tr>
-              <th>Programme:</th>
-              <td id="pProgramme"></td>
-              <th>Section:</th>
-              <td id="pSection"></td>
-            </tr>
-            <tr>
-              <th>Admission Type:</th>
-              <td id="pAdmissionType"></td>
-              <th>Rank / HT No:</th>
-              <td id="pRankHtNo"></td>
-            </tr>
-            <tr>
-              <th>Fee Reimb.:</th>
-              <td id="pFeeReimb"></td>
-              <th>APAAR ID:</th>
-              <td id="pApaarId"></td>
-            </tr>
-          </table>
-
-          <div class="preview-photo-box">
-            <img id="pCombinedCardImg" alt="Student Card">
-          </div>
-        </div>
-
-        <h5>2. Personal Information</h5>
-        <table class="preview-table">
-          <tr>
-            <th>Full Name (SSC/CBSE/ICSE):</th>
-            <td id="pNameSsc"></td>
-            <th>Gender:</th>
-            <td id="pGender"></td>
-          </tr>
-          <tr>
-            <th>Date of Birth:</th>
-            <td id="pDob"></td>
-            <th>Blood Group:</th>
-            <td id="pBloodGroup"></td>
-          </tr>
-          <tr>
-            <th>Mobile:</th>
-            <td id="pStudentMobile"></td>
-            <th>Email:</th>
-            <td id="pStudentEmail"></td>
-          </tr>
-          <tr>
-            <th>Category & Sub-Caste:</th>
-            <td id="pCategoryCaste"></td>
-            <th>Aadhaar Number:</th>
-            <td id="pStudentAadhaar"></td>
-          </tr>
-          <tr>
-            <th>ID Mark 1:</th>
-            <td id="pIdMark1"></td>
-            <th>ID Mark 2:</th>
-            <td id="pIdMark2"></td>
-          </tr>
-        </table>
-
-        <h5>3. Educational Qualifications</h5>
-        <table class="preview-table">
-          <tr>
-            <th>SSC/CBSE/ICSE Regd:</th>
-            <td id="pSscRegd"></td>
-            <th>SSC/CBSE/ICSE Marks (%):</th>
-            <td id="pSscMarks"></td>
-          </tr>
-          <tr>
-            <th>Inter / Dip Regd:</th>
-            <td id="pInterRegd"></td>
-            <th>Inter / Dip Marks (%):</th>
-            <td id="pInterMarks"></td>
-          </tr>
-        </table>
-
-        <h5>4. Parent / Guardian Details</h5>
-        <table class="preview-table">
-          <tr>
-            <th>Father's Name:</th>
-            <td id="pFatherName"></td>
-            <th>Father's Mobile:</th>
-            <td id="pFatherMobile"></td>
-          </tr>
-          <tr>
-            <th>Father's Occ:</th>
-            <td id="pFatherOcc"></td>
-            <th>Father's Aadhaar:</th>
-            <td id="pFatherAadhaar"></td>
-          </tr>
-          <tr>
-            <th>Mother's Name:</th>
-            <td id="pMotherName"></td>
-            <th>Mother's Mobile:</th>
-            <td id="pMotherMobile"></td>
-          </tr>
-          <tr>
-            <th>Mother's Occ:</th>
-            <td id="pMotherOcc"></td>
-            <th>Mother's Aadhaar:</th>
-            <td id="pMotherAadhaar"></td>
-          </tr>
-        </table>
-
-        <h5>5. Residence & Campus Logistics</h5>
-        <table class="preview-table">
-          <tr>
-            <th>Permanent Addr:</th>
-            <td colspan="3" id="pPermAddress"></td>
-          </tr>
-          <tr>
-            <th>Current Addr:</th>
-            <td colspan="3" id="pCurrAddress"></td>
-          </tr>
-          <tr>
-            <th>Residential:</th>
-            <td id="pResStatus"></td>
-            <th>Campus Commute:</th>
-            <td id="pLogisticsPoint"></td>
-          </tr>
-          <tr>
-            <th>Extra-Curricular:</th>
-            <td id="pCoCurricular"></td>
-            <th>NCC / NSS:</th>
-            <td id="pNccNss"></td>
-          </tr>
-        </table>
-
-        <p class="preview-declaration">
-          Declaration: I confirm that all the details submitted above are accurate and match my official institutional certificates.
-        </p>
-      </div>
-    </div>
-
-  </div>
-
-  <script src="app.js"></script>
-</body>
-</html>
